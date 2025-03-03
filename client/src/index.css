@@ -3,11 +3,54 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #3ECF8E;
-  --color-secondary: #6366F1;
-  --color-dark: #121212;
-  --color-gray: #6B7280;
+  --color-background: #121212;
+  --color-surface: #1C1C1C;
+  --color-primary: #3ECF8E;     /* Supabase Green */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A0A0A0;
+  --color-border: #2C2C2C;
+  --color-secondary: #6366F1;   /* Indigo */
+  --color-accent: #FF6B6B;      /* Coral */
+  --color-text-dark: #1F2937;   /* Deep Gray */
+  --color-text-light: #6B7280;  /* Soft Gray */
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-50px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(62, 207, 142, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(62, 207, 142, 0.6); }
+}
+
+.animate-fadeIn { animation: fadeIn 0.8s ease-out; }
+.animate-slideInRight { animation: slideInRight 0.8s ease-out; }
+.animate-slideInLeft { animation: slideInLeft 0.8s ease-out; }
+.animate-slideInUp { animation: slideInUp 0.8s ease-out; }
+.animate-pulse-slow { animation: pulse 5s infinite; }
 
 body {
   @apply 
@@ -21,7 +64,10 @@ body {
     antialiased 
     selection:bg-green-500/70 
     selection:text-white;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: 1.6;
 }
 
 #root {
@@ -30,66 +76,34 @@ body {
     flex-col 
     min-h-screen 
     w-full;
+  background-color: var(--color-background);
 }
 
 /* Custom Utility Classes */
 .gradient-text {
-  @apply 
-    text-transparent 
-    bg-clip-text 
-    bg-gradient-to-r 
-    from-green-600 
-    to-indigo-600 
-    font-bold;
+  background: linear-gradient(45deg, var(--color-primary), #4299E1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .glass-card {
-  @apply 
-    relative
-    backdrop-blur-xl
-    rounded-3xl
-    shadow-xl
-    overflow-hidden
-    transition-all
-    duration-300
-    ease-in-out;
-  
-  background-color: rgba(255, 255, 255, 0.85);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 
-    0 15px 50px rgba(0, 0, 0, 0.05),
-    0 5px 15px rgba(0, 0, 0, 0.03);
-}
-
-.glass-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: 
-    radial-gradient(
-      circle at center, 
-      rgba(62, 207, 142, 0.08) 0%, 
-      transparent 70%
-    );
-  transform: rotate(-45deg);
-  z-index: 1;
-  opacity: 0;
-  transition: opacity 0.5s ease;
+  background: rgba(28, 28, 28, 0.7);
+  backdrop-filter: blur(15px);
+  border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
 }
 
 .glass-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 
-    0 25px 60px rgba(0, 0, 0, 0.08),
-    0 10px 20px rgba(0, 0, 0, 0.04);
-  border-color: rgba(62, 207, 142, 0.15);
+  animation: glow 2s infinite;
+  transform: translateY(-5px);
 }
 
-.glass-card:hover::before {
-  opacity: 1;
+.code-block {
+  background-color: #1E1E1E;
+  border-radius: 8px;
+  padding: 1rem;
+  font-family: 'Fira Code', monospace;
+  color: var(--color-primary);
 }
 
 .hover-lift {
@@ -103,26 +117,14 @@ body {
 }
 
 .btn-primary {
-  @apply
-    bg-gradient-to-r
-    from-green-500
-    to-indigo-500
-    text-white
-    font-medium
-    py-2.5
-    px-6
-    rounded-full
-    hover:shadow-lg
-    hover:from-green-600
-    hover:to-indigo-600
-    active:shadow-inner
-    active:opacity-90
-    transition-all
-    duration-300
-    focus:outline-none
-    focus:ring-2
-    focus:ring-green-500/50
-    focus:ring-offset-2;
+  background-color: var(--color-primary);
+  color: var(--color-background);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(62, 207, 142, 0.5);
 }
 
 .btn-secondary {

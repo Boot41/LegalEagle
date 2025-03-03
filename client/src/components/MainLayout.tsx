@@ -1,71 +1,128 @@
 import React from 'react';
-// import { Outlet } from 'react-router-dom';
 import { 
-  FileText, 
   Home, 
-  Info, 
-  ChevronRight 
+  ChevronRight,
+  Menu,
+  Code,
+  Search,
+  FileText as DocumentIcon
 } from 'lucide-react';
+import { 
+  Link, 
+  Outlet, 
+  useLocation 
+} from 'react-router-dom';
 
 import SearchBar from './SearchBar';
 import DocumentAnalysisContainer from './DocumentAnalysisContainer';
+import LandingPage from './LandingPage';
 
-const Header = () => (
-  <header className="py-6 border-b border-gray-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
-    <div className="w-full px-8 flex justify-between items-center">
-      <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-indigo-500 flex items-center justify-center text-white">
-          <FileText size={20} />
+const Header = () => {
+  const location = useLocation();
+
+  return (
+    <header className="py-6 border-b border-gray-900 bg-[#1C1C1C]/80 backdrop-blur-sm sticky top-0 z-50 shadow-lg">
+      <div className="container mx-auto px-8 flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white shadow-md animate-pulse-slow">
+            <Code size={24} />
+          </div>
+          <h1 className="text-3xl font-bold gradient-text tracking-tight">
+            LegalEagle
+          </h1>
         </div>
-        <h1 className="text-3xl font-bold gradient-text">
-          LegalEagle
-        </h1>
+        
+        <nav className="hidden md:block">
+          <ul className="flex space-x-6 items-center">
+            <li>
+              <Link 
+                to="/" 
+                className={`
+                  text-gray-300 
+                  hover:text-green-400 
+                  transition-colors 
+                  font-medium 
+                  flex 
+                  items-center 
+                  ${location.pathname === '/' ? 'text-green-400' : ''}
+                `}
+              >
+                <Home size={18} className="mr-2" />
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/search" 
+                className={`
+                  text-gray-300 
+                  hover:text-green-400 
+                  transition-colors 
+                  font-medium 
+                  flex 
+                  items-center 
+                  ${location.pathname === '/search' ? 'text-green-400' : ''}
+                `}
+              >
+                <Search size={18} className="mr-2" />
+                Search
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/document" 
+                className={`
+                  text-gray-300 
+                  hover:text-green-400 
+                  transition-colors 
+                  font-medium 
+                  flex 
+                  items-center 
+                  ${location.pathname === '/document' ? 'text-green-400' : ''}
+                `}
+              >
+                <DocumentIcon size={18} className="mr-2" />
+                Document
+              </Link>
+            </li>
+            <li>
+              <a 
+                href="#" 
+                className="btn-primary px-5 py-2 rounded-lg flex items-center font-semibold"
+              >
+                Get Started
+                <ChevronRight size={16} className="ml-2" />
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <button className="md:hidden text-gray-300 hover:text-green-400">
+          <Menu className="h-6 w-6" />
+        </button>
       </div>
-      
-      <nav>
-        <ul className="flex space-x-8">
-          <li>
-            <a href="/" className="nav-link active flex items-center">
-              <Home size={18} className="mr-1.5" />
-              Home
-            </a>
-          </li>
-          <li>
-            <a href="#" className="nav-link flex items-center">
-              <Info size={18} className="mr-1.5" />
-              About
-            </a>
-          </li>
-          <li>
-            <a href="#" className="btn-primary flex items-center text-sm">
-              Get Started
-              <ChevronRight size={16} className="ml-1" />
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-);
+    </header>
+  );
+};
 
 const Footer = () => (
-  <footer className="py-8 border-t border-gray-100 bg-white/80 backdrop-blur-sm">
-    <div className="w-full px-8 flex flex-col md:flex-row justify-between items-center">
-      <div className="flex items-center space-x-2 mb-4 md:mb-0">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-indigo-500 flex items-center justify-center text-white">
-          <FileText size={16} />
+  <footer className="py-10 border-t border-gray-900 bg-[#1C1C1C]/80 backdrop-blur-sm">
+    <div className="container mx-auto px-8 flex flex-col md:flex-row justify-between items-center">
+      <div className="flex items-center space-x-3 mb-4 md:mb-0">
+        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white shadow-md">
+          <Code size={20} />
         </div>
-        <span className="font-semibold gradient-text">LegalEagle</span>
+        <span className="text-xl font-bold gradient-text">LegalEagle</span>
       </div>
       
-      <p className="text-gray-500 text-sm">
+      <p className="text-gray-400 text-sm mb-4 md:mb-0">
         {new Date().getFullYear()} LegalEagle. All rights reserved.
       </p>
       
-      <div className="flex space-x-4 mt-4 md:mt-0">
-        <a href="#" className="text-gray-500 hover:text-green-600 transition-colors">Privacy</a>
-        <a href="#" className="text-gray-500 hover:text-green-600 transition-colors">Terms</a>
-        <a href="#" className="text-gray-500 hover:text-green-600 transition-colors">Contact</a>
+      <div className="flex space-x-4">
+        <a href="#" className="text-gray-400 hover:text-green-400 transition-colors">Privacy</a>
+        <a href="#" className="text-gray-400 hover:text-green-400 transition-colors">Terms</a>
+        <a href="#" className="text-gray-400 hover:text-green-400 transition-colors">Contact</a>
       </div>
     </div>
   </footer>
@@ -73,14 +130,12 @@ const Footer = () => (
 
 const MainLayout: React.FC = () => {
   return (
-    <div className="min-h-screen w-screen overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-[#121212] text-white">
       <Header />
 
-      <main className="w-full px-8 py-8">
-        <div className="w-full space-y-8">
-          <SearchBar />
-          <DocumentAnalysisContainer />          
-          {/* <Outlet /> */}
+      <main className="flex-grow px-4 md:px-8 lg:px-16 xl:px-24 py-8 flex flex-col items-center">
+        <div className="w-full max-w-[90%] mx-auto">
+          <Outlet />
         </div>
       </main>
 

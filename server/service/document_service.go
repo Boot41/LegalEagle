@@ -72,12 +72,15 @@ func NewDocumentService(db *gorm.DB) (*DocumentService, error) {
 }
 
 // UploadAndProcessDocument uploads the file to Supabase S3 and processes it with OCR.space
-func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *multipart.FileHeader) (string, string, string, error) {
+func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *multipart.FileHeader) (string, string, string, string, float64, error) {
+	log.Println("Starting UploadAndProcessDocument")
+	log.Printf("File details: Name=%s, Size=%d", header.Filename, header.Size)
+
 	// Step 1: Upload file to Supabase S3
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
-		log.Printf("Error reading file: %v", err)
-		return "", "", "", fmt.Errorf("failed to read file: %w", err)
+		log.Printf("ERROR reading file: %v", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	fileID := fmt.Sprintf("%d-%s", time.Now().Unix(), header.Filename)
@@ -85,7 +88,7 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 
 	if bucket == "" {
 		log.Println("SUPABASE_BUCKET environment variable is not set")
-		return "", "", "", fmt.Errorf("bucket name not configured")
+		return "", "", "", "", 0.0, fmt.Errorf("bucket name not configured")
 	}
 
 	uploadInput := &s3.PutObjectInput{
@@ -99,7 +102,7 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 	_, err = s.s3Client.PutObject(uploadInput)
 	if err != nil {
 		log.Printf("S3 upload error: %v", err)
-		return "", "", "", fmt.Errorf("failed to upload file to S3: %w", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed to upload file to S3: %w", err)
 	}
 
 	fileURL := fmt.Sprintf("%s/object/public/%s/%s", os.Getenv("SUPABASE_S3_URL"), bucket, fileID)
@@ -109,24 +112,69 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 	apiKey := os.Getenv("OCR_SPACE_API_KEY")
 	if apiKey == "" {
 		log.Println("OCR_SPACE_API_KEY environment variable is not set")
-		return "", "", "", fmt.Errorf("OCR API key not configured")
+		return "", "", "", "", 0.0, fmt.Errorf("OCR API key not configured")
 	}
 
 	ocrText, err := processWithOCRSpace(fileBytes, header.Filename)
 	if err != nil {
-		log.Printf("OCR processing error: %v", err)
-		return "", "", "", fmt.Errorf("failed to process OCR with OCR.space: %w", err)
+		log.Printf("ERROR in OCR processing: %v", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed to process OCR with OCR.space: %w", err)
 	}
+	log.Printf("OCR Text extracted: %s", ocrText)
 
 	// Step 3: Index in Elasticsearch
 	err = s.indexDocument(fileID, fileURL, ocrText)
 	if err != nil {
 		log.Printf("Elasticsearch indexing error: %v", err)
-		return "", "", "", fmt.Errorf("failed to index document in Elasticsearch: %w", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed to index document in Elasticsearch: %w", err)
 	}
 	log.Printf("Document indexed successfully with ID: %s", fileID)
 
-	// Extract file type and title from the filename
+	// Step 4: Compliance Analysis
+	// Determine applicable rules using Groq
+	applicableRules, err := s.DetermineApplicableRules(ocrText)
+	if err != nil {
+		log.Printf("ERROR determining applicable rules: %v", err)
+		return "", "", "", "", 0.0, err
+	}
+	log.Printf("Applicable Rules: %v", applicableRules)
+
+	// Fetch rules from the database
+	var rules []model.ComplianceRule
+	if err := s.db.Where("name IN ?", applicableRules).Find(&rules).Error; err != nil {
+		log.Printf("ERROR fetching rules from database: %v", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed to fetch rules from database: %w", err)
+	}
+	log.Printf("Fetched %d rules from database", len(rules))
+
+	// Check compliance for each rule
+	var complianceResults []map[string]interface{}
+	for _, rule := range rules {
+		log.Printf("Checking compliance for rule: %s", rule.Name)
+		result, err := s.CheckRuleCompliance(ocrText, rule.Name, rule.Pattern)
+		if err != nil {
+			log.Printf("ERROR checking rule compliance for %s: %v", rule.Name, err)
+			continue
+		}
+		complianceResults = append(complianceResults, result)
+		log.Printf("Compliance result for %s: %+v", rule.Name, result)
+	}
+
+	// Calculate risk score
+	riskScore := s.CalculateRiskScore(complianceResults, rules)
+	log.Printf("Calculated Risk Score: %f", riskScore)
+
+	// Marshal compliance results
+	parsedDataJSON, err := json.Marshal(complianceResults)
+	if err != nil {
+		log.Printf("ERROR marshaling compliance results: %v", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed to marshal compliance results: %w", err)
+	}
+
+	// Log the entire JSON for debugging
+	log.Printf("Compliance Results JSON: %s", string(parsedDataJSON))
+
+	// Step 5: Save to database with compliance results
 	fileName := filepath.Base(fileURL)
 	fileType := filepath.Ext(fileName)
 	if fileType != "" {
@@ -139,18 +187,17 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 		FileType:    fileType,
 		OriginalURL: fileURL,
 		OcrText:     ocrText,
+		ParsedData:  datatypes.JSON(parsedDataJSON),
+		RiskScore:   riskScore,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-		// Initialize other fields with default values
-		ParsedData: datatypes.JSON("{}"),
-		RiskScore:  0.0,
 	}).Error
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to save to database: %w", err)
+		return "", "", "", "", 0, fmt.Errorf("failed to save to database: %w", err)
 	}
-	log.Printf("Document saved to database successfully")
+	log.Printf("Document saved to database successfully with compliance analysis")
 
-	return ocrText, fileID, fileURL, nil
+	return ocrText, fileID, fileURL, string(parsedDataJSON), riskScore, nil
 }
 
 // SearchDocuments searches for documents in Elasticsearch
@@ -401,4 +448,102 @@ func (s *DocumentService) indexDocument(fileID, fileURL, ocrText string) error {
 
 	log.Println("Document successfully indexed in Elasticsearch")
 	return nil
+}
+
+// processDocumentCompliance processes compliance for a single document
+func (s *DocumentService) processDocumentCompliance(doc model.Document) (map[string]interface{}, error) {
+	// Create a map representation of the document
+	docMap := map[string]interface{}{
+		"id":           doc.ID,
+		"title":        doc.Title,
+		"file_type":    doc.FileType,
+		"original_url": doc.OriginalURL,
+		"ocr_text":     doc.OcrText,
+		"risk_score":   doc.RiskScore,
+		"parsed_data":  doc.ParsedData,
+	}
+
+	// If no OCR text, return the document map without compliance processing
+	if doc.OcrText == "" {
+		return docMap, nil
+	}
+
+	// Determine applicable rules (use context to cache or optimize)
+	applicableRuleNames, err := s.DetermineApplicableRules(doc.OcrText)
+	if err != nil || len(applicableRuleNames) == 0 {
+		return docMap, err
+	}
+
+	// If no parsed data, return with rule information
+	if len(doc.ParsedData) == 0 {
+		docMap["applicable_rules"] = applicableRuleNames
+		return docMap, nil
+	}
+
+	// Parse compliance results efficiently
+	var complianceResults []map[string]interface{}
+	if err := json.Unmarshal([]byte(doc.ParsedData), &complianceResults); err != nil {
+		docMap["compliance_parsing_error"] = err.Error()
+		return docMap, err
+	}
+
+	// Quick compliance status determination
+	overallStatus := "pass"
+	processedComplianceDetails := make([]map[string]interface{}, 0, len(complianceResults))
+
+	for _, result := range complianceResults {
+		// Add first applicable rule name
+		result["rule_name"] = applicableRuleNames[0]
+		processedComplianceDetails = append(processedComplianceDetails, result)
+
+		// Determine status efficiently
+		if status, ok := result["status"].(string); !ok || status != "pass" {
+			overallStatus = "fail"
+		}
+	}
+
+	// Add compliance information
+	docMap["compliance_status"] = overallStatus
+	docMap["compliance_details"] = processedComplianceDetails
+	docMap["applicable_rules"] = applicableRuleNames
+
+	return docMap, nil
+}
+
+// GetAllDocuments retrieves all documents from the database
+func (s *DocumentService) GetAllDocuments() ([]map[string]interface{}, error) {
+	log.Println("GetAllDocuments: Starting database query")
+
+	var documents []model.Document
+	// Use Find with error checking
+	result := s.db.Select("*").Find(&documents)
+
+	if result.Error != nil {
+		log.Printf("GetAllDocuments: Database query error: %v", result.Error)
+		return nil, fmt.Errorf("failed to fetch documents: %w", result.Error)
+	}
+
+	// Check if no documents found
+	if result.RowsAffected == 0 {
+		log.Println("GetAllDocuments: No documents found")
+		return []map[string]interface{}{}, nil
+	}
+
+	log.Printf("GetAllDocuments: Retrieved %d documents", len(documents))
+
+	// Process documents and add compliance information
+	processedDocuments := make([]map[string]interface{}, 0, len(documents))
+	for _, doc := range documents {
+		processedDoc, err := s.processDocumentCompliance(doc)
+		if err != nil {
+			log.Printf("Error processing document %s: %v", doc.ID, err)
+			continue
+		}
+		processedDocuments = append(processedDocuments, processedDoc)
+	}
+
+	// Log processed documents summary
+	log.Printf("Total Processed Documents: %d", len(processedDocuments))
+
+	return processedDocuments, nil
 }

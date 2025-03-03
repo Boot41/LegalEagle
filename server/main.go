@@ -37,7 +37,9 @@ func main() {
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())
 	router.POST("/upload", docController.UploadDocument)
+	router.POST("/rules", docController.AddComplianceRule)
 	router.GET("/search", docController.SearchDocuments)
+	router.GET("/dashboard", docController.GetAllDocuments) // Update route to /dashboard
 
 	router.Run(":8080")
 }
