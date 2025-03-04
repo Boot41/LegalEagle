@@ -6,6 +6,7 @@ import SearchPage from './components/SearchPage';
 import DocumentAnalysisPage from './components/DocumentAnalysisPage';
 import AddRule from './components/AddRule';
 import Dashboard from './components/Dashboard';
+import ActionItems from './components/ActionItems';
 import './index.css';
 
 const App: React.FC = () => {
@@ -18,6 +19,7 @@ const App: React.FC = () => {
           <Route path="document" element={<DocumentAnalysisPage />} />
           <Route path="rules" element={<AddRule />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="action-items" element={<ActionItems />} />
         </Route>
       </Routes>
     </BrowserRouter>

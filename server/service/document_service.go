@@ -182,7 +182,7 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 	}
 	title := strings.TrimSuffix(fileName, fileType)
 
-	err = s.db.Create(&model.Document{
+	doc := model.Document{
 		Title:       title,
 		FileType:    fileType,
 		OriginalURL: fileURL,
@@ -191,11 +191,20 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 		RiskScore:   riskScore,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-	}).Error
-	if err != nil {
-		return "", "", "", "", 0, fmt.Errorf("failed to save to database: %w", err)
 	}
-	log.Printf("Document saved to database successfully with compliance analysis")
+	if err := s.db.Create(&doc).Error; err != nil {
+		log.Printf("ERROR saving document to database: %v", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed to save to database: %w", err)
+	}
+	log.Printf("Document saved to database successfully with ID: %s", doc.ID)
+
+	// Step 6: Create Action Items and Document Rule Results
+	err = s.CreateActionItems(doc)
+	if err != nil {
+		log.Printf("Error creating action items: %v", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed to create action items: %w", err)
+	}
+	log.Printf("Action items processed for document %s", doc.ID)
 
 	return ocrText, fileID, fileURL, string(parsedDataJSON), riskScore, nil
 }

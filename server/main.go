@@ -40,6 +40,8 @@ func main() {
 	router.POST("/rules", docController.AddComplianceRule)
 	router.GET("/search", docController.SearchDocuments)
 	router.GET("/dashboard", docController.GetAllDocuments) // Update route to /dashboard
+	router.GET("/action-items", docController.GetPendingActionItemsWithTitles)
+	router.PUT("/action-items/:id/complete", docController.CompleteActionItem)
 
 	router.Run(":8080")
 }

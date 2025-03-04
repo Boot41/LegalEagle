@@ -23,7 +23,7 @@ interface DocumentUploadProps {
 }
 
 const UPLOAD_ENDPOINT = import.meta.env.VITE_UPLOAD_ENDPOINT || 'http://localhost:8080/upload';
-const UPLOAD_TIMEOUT = 30000; // 30 seconds timeout
+const UPLOAD_TIMEOUT = 120000; // 2 minutes timeout
 const MAX_RETRIES = 3;
 const BASE_RETRY_DELAY = 1000; // 1 second
 const MAX_CONCURRENT_UPLOADS = 3; // Limit concurrent uploads
