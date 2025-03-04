@@ -113,7 +113,12 @@ func (s *DocumentService) UpdateActionItem(actionID string) error {
 
 	action.Status = "completed"
 	action.UpdatedAt = time.Now()
-	if err := s.db.Save(&action).Error; err != nil {
+	
+	// Use Omit to skip the AssignedTo field to avoid UUID validation error
+	if err := s.db.Model(&action).Omit("AssignedTo").Updates(map[string]interface{}{
+		"Status":    "completed",
+		"UpdatedAt": time.Now(),
+	}).Error; err != nil {
 		log.Printf("[UpdateActionItem] Error updating action item %s: %v", actionID, err)
 		return err
 	}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, ClipboardList, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Define interface for Action Item
 interface ActionItem {
@@ -54,70 +55,137 @@ const ActionItems: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="text-center py-4">Loading action items...</div>;
+    if (loading) return (
+        <div className="flex justify-center items-center py-12">
+            <div className="animate-pulse-slow text-[var(--color-primary)]">
+                <ClipboardList size={32} />
+            </div>
+            <span className="ml-3 text-[var(--color-text-secondary)]">Loading action items...</span>
+        </div>
+    );
 
     return (
-        <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4 flex items-center">
-                <AlertCircle className="mr-2" /> Action Items
-            </h2>
-            {actionItems.length === 0 ? (
-                <p className="text-gray-500">No pending action items.</p>
-            ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="bg-gray-100">
-                                <th className="p-3 text-left">Document Title</th>
-                                <th className="p-3 text-left">Action Name</th>
-                                <th className="p-3 text-left">Priority</th>
-                                <th className="p-3 text-left">Assigned To</th>
-                                <th className="p-3 text-left">Due Date</th>
-                                <th className="p-3 text-center">Complete</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {actionItems.map(item => (
-                                <tr key={item.id} className="border-b hover:bg-gray-50">
-                                    <td className="p-3">{item.title}</td>
-                                    <td className="p-3">{item.description}</td>
-                                    <td className="p-3">
-                                        <span className={`px-2 py-1 rounded text-white ${priorityColor(item.priority)}`}>
-                                            {item.priority}
-                                        </span>
-                                    </td>
-                                    <td className="p-3">{item.assigned_to || 'Unassigned'}</td>
-                                    <td className="p-3">{new Date(item.due_date).toLocaleDateString()}</td>
-                                    <td className="p-3 text-center flex justify-center items-center">
-                                        <button 
-                                            onClick={() => handleComplete(item.id)} 
-                                            className="hover:bg-green-100 rounded-full p-1 transition-colors"
-                                            title="Mark as Complete"
-                                        >
-                                            <CheckCircle 
-                                                className="text-green-500 hover:text-green-700" 
-                                                size={24} 
-                                            />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="p-6 max-w-7xl mx-auto"
+        >
+            <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold gradient-text flex items-center">
+                    <ClipboardList className="mr-3 text-[var(--color-primary)]" /> 
+                    Action Items
+                </h2>
+                <div className="glass-card px-4 py-2 rounded-lg text-sm text-[var(--color-text-secondary)]">
+                    {actionItems.length} pending items
                 </div>
-            )}
-        </div>
+            </div>
+
+            <AnimatePresence>
+                {actionItems.length === 0 ? (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="glass-card rounded-xl p-8 text-center"
+                    >
+                        <div className="flex flex-col items-center justify-center">
+                            <div className="w-16 h-16 rounded-full bg-[var(--color-surface)] flex items-center justify-center mb-4">
+                                <CheckCircle className="text-[var(--color-primary)]" size={32} />
+                            </div>
+                            <h3 className="text-xl font-semibold mb-2">All Clear!</h3>
+                            <p className="text-[var(--color-text-secondary)] max-w-md">
+                                No pending action items. All compliance issues have been addressed.
+                            </p>
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="glass-card rounded-xl overflow-hidden shadow-lg"
+                    >
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="bg-[var(--color-surface)] border-b border-[var(--color-border)]">
+                                        <th className="p-4 text-left text-[var(--color-text-secondary)] font-medium">Document</th>
+                                        <th className="p-4 text-left text-[var(--color-text-secondary)] font-medium">Action Required</th>
+                                        <th className="p-4 text-left text-[var(--color-text-secondary)] font-medium">Priority</th>
+                                        <th className="p-4 text-left text-[var(--color-text-secondary)] font-medium">Assigned To</th>
+                                        <th className="p-4 text-left text-[var(--color-text-secondary)] font-medium">Due Date</th>
+                                        <th className="p-4 text-center text-[var(--color-text-secondary)] font-medium">Complete</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {actionItems.map((item, index) => (
+                                        <motion.tr 
+                                            key={item.id} 
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: index * 0.05 }}
+                                            className="border-b border-[var(--color-border)] hover:bg-[var(--color-surface)]/50 transition-colors"
+                                        >
+                                            <td className="p-4">
+                                                <div className="flex items-center">
+                                                    <FileText size={18} className="text-[var(--color-text-secondary)] mr-2" />
+                                                    <span className="font-medium text-[var(--color-text-primary)]">{item.title}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 text-[var(--color-text-primary)]">{item.description}</td>
+                                            <td className="p-4">
+                                                <PriorityBadge priority={item.priority} />
+                                            </td>
+                                            <td className="p-4 text-[var(--color-text-secondary)]">
+                                                {item.assigned_to || 'Unassigned'}
+                                            </td>
+                                            <td className="p-4 text-[var(--color-text-secondary)]">
+                                                {item.due_date ? new Date(item.due_date).toLocaleDateString() : 'No date set'}
+                                            </td>
+                                            <td className="p-4 text-center">
+                                                <button 
+                                                    onClick={() => handleComplete(item.id)} 
+                                                    className="hover-lift inline-flex items-center justify-center w-9 h-9 rounded-full bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20"
+                                                    title="Mark as Complete"
+                                                >
+                                                    <CheckCircle 
+                                                        className="text-[var(--color-primary)]" 
+                                                        size={18} 
+                                                    />
+                                                </button>
+                                            </td>
+                                        </motion.tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
     );
 };
 
-// Helper functions
-const priorityColor = (priority: string): string => {
-    switch (priority.toLowerCase()) {
-        case 'high': return 'bg-red-500';
-        case 'medium': return 'bg-yellow-500';
-        case 'low': return 'bg-green-500';
-        default: return 'bg-gray-500';
-    }
+// Priority Badge component inspired by Supabase design
+const PriorityBadge = ({ priority }: { priority: string }) => {
+    const badgeStyles = {
+        'high': 'bg-[#E54F4F]/10 text-[#E54F4F] border border-[#E54F4F]/20',
+        'medium': 'bg-[#F2994A]/10 text-[#F2994A] border border-[#F2994A]/20',
+        'low': 'bg-[#2C9ED4]/10 text-[#2C9ED4] border border-[#2C9ED4]/20',
+        'default': 'bg-gray-100/10 text-gray-400 border border-gray-500/20'
+    };
+
+    return (
+        <div className={`
+            inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
+            transition-all duration-300 ease-in-out
+            ${badgeStyles[priority.toLowerCase() as keyof typeof badgeStyles] || badgeStyles.default}
+            hover:shadow-md hover:scale-105
+        `}>
+            {priority.toUpperCase()}
+        </div>
+    );
 };
 
 export default ActionItems;
