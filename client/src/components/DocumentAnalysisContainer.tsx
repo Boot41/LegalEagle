@@ -3,7 +3,17 @@ import { motion } from 'framer-motion';
 import { Zap, FileText } from 'lucide-react';
 import AIInsights from './AIInsights';
 
-// Define the type for uploaded documents
+// // Define the type for uploaded documents
+// interface UploadedDocument {
+//   id?: string;
+//   name: string;
+//   type: string;
+//   size: number;
+//   path?: string;
+//   uploadedAt?: Date;
+//   complianceStatus?: string;
+// }
+
 interface UploadedDocument {
   id?: string;
   name: string;
@@ -12,6 +22,7 @@ interface UploadedDocument {
   path?: string;
   uploadedAt?: Date;
   complianceStatus?: string;
+  complianceResults?: string[]; // Change to string array for applicable rules
 }
 
 // Define prop types for DocumentAnalysisContainer

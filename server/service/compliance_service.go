@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	// "github.com/Itish41/LegalEagle/models
 	model "github.com/Itish41/LegalEagle/models"
@@ -25,33 +26,56 @@ func (s *DocumentService) AddComplianceRule(rule *model.ComplianceRule) error {
 
 // DetermineApplicableRules uses Groq to suggest relevant rules
 func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, error) {
-	// First, try to get all available rules from the database
+	// Fetch all rules from the database
 	allRules, err := s.GetAllComplianceRules()
 	if err != nil {
 		log.Printf("ERROR retrieving compliance rules: %v", err)
 		return nil, err
 	}
-	log.Println("Retrieved all compliance rules from database:", allRules)
+	log.Printf("Retrieved %d compliance rules from database", len(allRules))
 
-	// Extract rule names for AI suggestion
-	var ruleNames []string
+	// Build a detailed rule list with names and descriptions
+	var ruleDetails []string
 	for _, rule := range allRules {
-		ruleNames = append(ruleNames, rule.Name)
+		ruleDetails = append(ruleDetails, fmt.Sprintf("%s: %s", rule.Name, rule.Description))
 	}
-	log.Println("Extracted rule names for AI suggestion:", ruleNames)
+	ruleNames := make([]string, len(allRules))
+	for i, rule := range allRules {
+		ruleNames[i] = rule.Name
+	}
+	log.Println("Rule details for Groq: ", ruleDetails)
 
+	// Validate Groq API Key
 	groqAPIKey := os.Getenv("VITE_GROQ_API_KEY")
 	if groqAPIKey == "" {
 		log.Println("ERROR: VITE_GROQ_API_KEY environment variable is not set")
 		return nil, fmt.Errorf("VITE_GROQ_API_KEY environment variable is not set")
 	}
 
-	// More open-ended prompt to allow AI to suggest rules dynamically
-	prompt := fmt.Sprintf("Analyze this document text and suggest relevant legal compliance rules to check from the following list: %v. Provide a JSON list of rule names based on the document's content:\n\n%s",
-		ruleNames, ocrText)
+	// Construct a detailed, structured prompt
+	prompt := fmt.Sprintf(`
+    Analyze the following document text and suggest the most relevant legal compliance rules to check from this list:
+    %s
+
+    Document Text:
+    %s
+
+    Instructions:
+    1. Carefully review the entire document text.
+    2. Match the content to the rules based on their names and descriptions.
+    3. Return a JSON object with an "applicable_rules" array containing rule names.
+    4. If no rules are clearly applicable, return a minimal set of generic rules (e.g., "General Compliance").
+    5. Ensure rule names match exactly as provided in the list.
+
+    Response Format:
+    {
+        "applicable_rules": ["Rule1", "Rule2", ...]
+    }
+    `, strings.Join(ruleDetails, "\n"), ocrText)
 	log.Printf("Groq API Prompt: %s", prompt)
 
-	reqBody, _ := json.Marshal(map[string]interface{}{
+	// Prepare request body
+	reqBody, err := json.Marshal(map[string]interface{}{
 		"messages": []map[string]string{
 			{
 				"role":    "user",
@@ -65,7 +89,12 @@ func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, er
 			"type": "json_object",
 		},
 	})
+	if err != nil {
+		log.Printf("ERROR creating request body: %v", err)
+		return nil, fmt.Errorf("failed to create request body: %w", err)
+	}
 
+	// Send request to Groq
 	req, err := http.NewRequest("POST", "https://api.groq.com/openai/v1/chat/completions", bytes.NewBuffer(reqBody))
 	if err != nil {
 		log.Printf("ERROR creating Groq request: %v", err)
@@ -74,7 +103,7 @@ func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, er
 	req.Header.Set("Authorization", "Bearer "+groqAPIKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Printf("ERROR sending Groq request: %v", err)
@@ -82,12 +111,12 @@ func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, er
 	}
 	defer resp.Body.Close()
 
+	// Read and parse response
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Printf("ERROR reading Groq response: %v", err)
 		return nil, fmt.Errorf("failed to read Groq response: %w", err)
 	}
-
 	log.Printf("Groq API Raw Response: %s", string(body))
 
 	var result struct {
@@ -97,54 +126,87 @@ func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, er
 			} `json:"message"`
 		} `json:"choices"`
 	}
-
 	if err := json.Unmarshal(body, &result); err != nil {
-		log.Printf("ERROR parsing Groq response: %v", err)
-		return nil, fmt.Errorf("failed to parse Groq response: %w", err)
+		log.Printf("ERROR parsing Groq response structure: %v", err)
+		return nil, fmt.Errorf("failed to parse Groq response structure: %w", err)
 	}
 
-	var applicableRules []string
+	// Parse applicable rules
+	var ruleResponse struct {
+		ApplicableRules []string `json:"applicable_rules"`
+	}
 	if len(result.Choices) > 0 {
-		log.Printf("Groq Response Content: %s", result.Choices[0].Message.Content)
-
-		// Try parsing the content as JSON
-		err = json.Unmarshal([]byte(result.Choices[0].Message.Content), &applicableRules)
-		if err != nil {
+		if err := json.Unmarshal([]byte(result.Choices[0].Message.Content), &ruleResponse); err != nil {
 			log.Printf("ERROR parsing rules from content: %v", err)
-			// Fallback: try manual parsing or extract from text
-			applicableRules = extractRulesFromText(result.Choices[0].Message.Content)
+			// Fallback: Check rule names against content
+			return s.fallbackRuleExtraction(ocrText, ruleNames), nil
 		}
 	}
 
-	// If no rules found, use a more generic fallback
+	applicableRules := ruleResponse.ApplicableRules
 	if len(applicableRules) == 0 {
-		applicableRules = []string{"General Compliance", "Document Review"}
+		applicableRules = []string{"General Compliance"} // Single generic fallback
 	}
 
-	log.Printf("Determined Applicable Rules: %v", applicableRules)
-	return applicableRules, nil
+	// Validate suggested rules exist in database
+	validRules := make([]string, 0, len(applicableRules))
+	for _, rule := range applicableRules {
+		log.Printf("Checking rule: %s", rule)
+		if contains(ruleNames, rule) {
+			validRules = append(validRules, rule)
+			log.Printf("Rule '%s' is valid", rule)
+		} else {
+			log.Printf("WARNING: Suggested rule '%s' not found in database rules", rule)
+		}
+	}
+
+	if len(validRules) == 0 {
+		log.Println("No valid rules found, using fallback rule extraction")
+		// Use fallback extraction to find rules based on document text
+		validRules = s.fallbackRuleExtraction(ocrText, ruleNames)
+
+		// If still no rules found, select a few random rules
+		if len(validRules) == 0 {
+			log.Println("No rules found via fallback, selecting random rules")
+			// Select up to 3 random rules from the available rules
+			for i := 0; i < len(ruleNames) && i < 3; i++ {
+				validRules = append(validRules, ruleNames[i])
+			}
+		}
+	}
+
+	// Ensure at least one rule is returned
+	if len(validRules) == 0 {
+		log.Println("No rules found at all, using default 'General Compliance'")
+		validRules = []string{"General Compliance"}
+	}
+
+	log.Printf("Determined Applicable Rules: %v", validRules)
+	log.Printf("All Available Rule Names: %v", ruleNames)
+	return validRules, nil
 }
 
-// Helper function to extract rules from text if JSON parsing fails
-func extractRulesFromText(content string) []string {
-	// More generic rule extraction
-	possibleRules := []string{
-		"Confidentiality",
-		"Non-Disclosure",
-		"Signature Requirement",
-		"Liability",
-		"Compliance",
-		"Legal Review",
-	}
+// Helper function for fallback rule extraction
+func (s *DocumentService) fallbackRuleExtraction(ocrText string, ruleNames []string) []string {
+	ocrLower := strings.ToLower(ocrText)
 	foundRules := []string{}
-
-	for _, rule := range possibleRules {
-		if strings.Contains(strings.ToLower(content), strings.ToLower(rule)) {
+	for _, rule := range ruleNames {
+		if strings.Contains(ocrLower, strings.ToLower(rule)) {
 			foundRules = append(foundRules, rule)
 		}
 	}
-
+	if len(foundRules) == 0 {
+		return []string{"General Compliance"}
+	}
 	return foundRules
+}
+
+// Helper function to get minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // CheckRuleCompliance checks if OCR text complies with a rule using Groq

@@ -85,7 +85,6 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 
 	fileID := fmt.Sprintf("%d-%s", time.Now().Unix(), header.Filename)
 	bucket := os.Getenv("SUPABASE_BUCKET")
-
 	if bucket == "" {
 		log.Println("SUPABASE_BUCKET environment variable is not set")
 		return "", "", "", "", 0.0, fmt.Errorf("bucket name not configured")
@@ -126,45 +125,48 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 	err = s.indexDocument(fileID, fileURL, ocrText)
 	if err != nil {
 		log.Printf("Elasticsearch indexing error: %v", err)
-		return "", "", "", "", 0.0, fmt.Errorf("failed to index document in Elasticsearch: %w", err)
+		return "", "", "", "", 0.0, fmt.Errorf("failed Merkel to index document in Elasticsearch: %w", err)
 	}
 	log.Printf("Document indexed successfully with ID: %s", fileID)
 
 	// Step 4: Compliance Analysis
-	// Determine applicable rules using Groq
-	applicableRules, err := s.DetermineApplicableRules(ocrText)
+	// Determine violated rules using Groq
+	violatedRuleNames, err := s.DetermineApplicableRules(ocrText)
 	if err != nil {
-		log.Printf("ERROR determining applicable rules: %v", err)
+		log.Printf("ERROR determining violated rules: %v", err)
 		return "", "", "", "", 0.0, err
 	}
-	log.Printf("Applicable Rules: %v", applicableRules)
+	log.Printf("Violated Rules: %v", violatedRuleNames)
 
-	// Fetch rules from the database
-	var rules []model.ComplianceRule
-	if err := s.db.Where("name IN ?", applicableRules).Find(&rules).Error; err != nil {
-		log.Printf("ERROR fetching rules from database: %v", err)
+	// Fetch all rules to build complete parsed_data
+	allRules, err := s.GetAllComplianceRules()
+	if err != nil {
+		log.Printf("ERROR fetching all rules from database: %v", err)
 		return "", "", "", "", 0.0, fmt.Errorf("failed to fetch rules from database: %w", err)
 	}
-	log.Printf("Fetched %d rules from database", len(rules))
+	log.Printf("Fetched %d rules from database", len(allRules))
 
-	// Check compliance for each rule
+	// Generate parsed_data for all rules
 	var complianceResults []map[string]interface{}
-	for _, rule := range rules {
-		log.Printf("Checking compliance for rule: %s", rule.Name)
-		result, err := s.CheckRuleCompliance(ocrText, rule.Name, rule.Pattern)
-		if err != nil {
-			log.Printf("ERROR checking rule compliance for %s: %v", rule.Name, err)
-			continue
+	ruleMap := make(map[string]model.ComplianceRule)
+	for _, rule := range allRules {
+		ruleMap[rule.Name] = rule
+		result := map[string]interface{}{
+			"rule_name":   rule.Name,
+			"severity":    rule.Severity,
+			"status":      "pass",
+			"explanation": fmt.Sprintf("The document complies with the '%s' rule.", rule.Name),
 		}
-		// Ensure rule name and severity are included in the result
-		result["rule_name"] = rule.Name
-		result["severity"] = rule.Severity
+		if contains(violatedRuleNames, rule.Name) {
+			result["status"] = "fail"
+			result["explanation"] = fmt.Sprintf("The document violates the '%s' rule: does not meet the required pattern '%s'.", rule.Name, rule.Pattern)
+		}
 		complianceResults = append(complianceResults, result)
 		log.Printf("Compliance result for %s: %+v", rule.Name, result)
 	}
 
 	// Calculate risk score
-	riskScore := s.CalculateRiskScore(complianceResults, rules)
+	riskScore := s.CalculateRiskScore(complianceResults, allRules)
 	log.Printf("Calculated Risk Score: %f", riskScore)
 
 	// Marshal compliance results
@@ -173,8 +175,6 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 		log.Printf("ERROR marshaling compliance results: %v", err)
 		return "", "", "", "", 0.0, fmt.Errorf("failed to marshal compliance results: %w", err)
 	}
-
-	// Log the entire JSON for debugging
 	log.Printf("Compliance Results JSON: %s", string(parsedDataJSON))
 
 	// Step 5: Save to database with compliance results
@@ -210,6 +210,16 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 	log.Printf("Action items processed for document %s", doc.ID)
 
 	return ocrText, fileID, fileURL, string(parsedDataJSON), riskScore, nil
+}
+
+// Helper function to check if a slice contains a string
+func contains(slice []string, item string) bool {
+	for _, s := range slice {
+		if s == item {
+			return true
+		}
+	}
+	return false
 }
 
 // SearchDocuments searches for documents in Elasticsearch
@@ -504,8 +514,33 @@ func (s *DocumentService) processDocumentCompliance(doc model.Document) (map[str
 	processedComplianceDetails := make([]map[string]interface{}, 0, len(complianceResults))
 
 	for _, result := range complianceResults {
-		// Add first applicable rule name
-		result["rule_name"] = applicableRuleNames[0]
+		// Determine the most relevant rule name
+		ruleName := ""
+
+		// First, check if the result already has a rule name
+		if name, ok := result["rule_name"].(string); ok && name != "" {
+			ruleName = name
+		} else if name, ok := result["rule"].(string); ok && name != "" {
+			ruleName = name
+		}
+
+		// If no rule name found, try to match from applicable rules
+		if ruleName == "" && len(applicableRuleNames) > 0 {
+			for _, name := range applicableRuleNames {
+				if strings.Contains(strings.ToLower(result["explanation"].(string)), strings.ToLower(name)) {
+					ruleName = name
+					break
+				}
+			}
+
+			// If still no match, use the first applicable rule
+			if ruleName == "" {
+				ruleName = applicableRuleNames[0]
+			}
+		}
+
+		// Add rule name to the result
+		result["rule_name"] = ruleName
 		processedComplianceDetails = append(processedComplianceDetails, result)
 
 		// Determine status efficiently

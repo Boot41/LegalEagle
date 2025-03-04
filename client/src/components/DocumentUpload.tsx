@@ -217,9 +217,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
             fileUrl: result.fileURL,
             fileId: result.fileID,
             ocrText: result.ocrText || 'No text extracted',
-            complianceResults: typeof result.complianceResults === 'string' 
-              ? result.complianceResults 
-              : JSON.stringify(result.complianceResults, null, 2),
+            complianceResults: result.applicable_rules || [], // Use applicable_rules from the new backend response
+
+            // complianceResults: typeof result.complianceResults === 'string' 
+            //   ? result.complianceResults 
+            //   : JSON.stringify(result.complianceResults, null, 2),
             riskScore: result.riskScore,
             fileName: selectedFile.name,
             fileType: selectedFile.type,

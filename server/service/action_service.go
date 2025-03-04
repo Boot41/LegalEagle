@@ -21,56 +21,74 @@ func (s *DocumentService) CreateActionItems(doc model.Document) error {
 	}
 
 	for _, result := range results {
-		if status, ok := result["status"].(string); ok && status == "fail" {
-			explanation, _ := result["explanation"].(string)
-			ruleName := extractRuleName(explanation)
-			log.Printf("Extracted rule name from explanation: %s", ruleName)
-
-			var rule model.ComplianceRule
-			if err := s.db.Where("name = ?", ruleName).First(&rule).Error; err != nil {
-				log.Printf("Rule %s not found in compliance_rules: %v", ruleName, err)
-				continue // Skip this result entirely if rule not found
-			}
-
-			// Ensure RuleID is valid (not empty)
-			if rule.ID == "" {
-				log.Printf("Invalid RuleID for %s; skipping action item creation", ruleName)
-				continue
-			}
-
-			action := model.ActionItem{
-				DocumentID:  doc.ID,
-				RuleID:      rule.ID,
-				Description: fmt.Sprintf("Address %s non-compliance: %s", ruleName, explanation),
-				Priority:    strings.Title(strings.ToLower(rule.Severity)),
-				Status:      "pending",
-				CreatedAt:   time.Now(),
-				UpdatedAt:   time.Now(),
-				// Don't set AssignedTo field to avoid UUID validation error
-			}
-
-			// Use Omit to skip the AssignedTo field
-			if err := s.db.Omit("AssignedTo").Create(&action).Error; err != nil {
-				log.Printf("Error creating action item: %v", err)
-				return err
-			}
-			log.Printf("Action item created: %s for document %s", action.Description, doc.ID)
-
-			docResult := model.DocumentRuleResult{
-				DocumentID: doc.ID,
-				RuleID:     rule.ID,
-				Status:     "fail",
-				Details:    datatypes.JSON(marshalResult(result)),
-				CreatedAt:  time.Now(),
-			}
-			if err := s.db.Create(&docResult).Error; err != nil {
-				log.Printf("Error creating document rule result: %v", err)
-				return err
-			}
-			log.Printf("Document rule result created for rule %s, document %s", ruleName, doc.ID)
+		status, ok := result["status"].(string)
+		if !ok || status != "fail" {
+			continue // Skip non-failed rules
 		}
+
+		ruleName, ok := result["rule_name"].(string)
+		if !ok {
+			log.Printf("Missing rule_name in compliance result: %+v", result)
+			continue
+		}
+		log.Printf("Processing failed rule: %s", ruleName)
+
+		var rule model.ComplianceRule
+		if err := s.db.Where("name = ?", ruleName).First(&rule).Error; err != nil {
+			log.Printf("Rule %s not found in compliance_rules: %v", ruleName, err)
+			continue
+		}
+
+		if rule.ID == "" {
+			log.Printf("Invalid RuleID for %s; skipping action item creation", ruleName)
+			continue
+		}
+
+		explanation, _ := result["explanation"].(string)
+		severity, _ := result["severity"].(string)
+		action := model.ActionItem{
+			DocumentID:  doc.ID,
+			RuleID:      rule.ID,
+			Description: fmt.Sprintf("Address %s non-compliance: %s", ruleName, explanation),
+			Priority:    strings.Title(strings.ToLower(severity)), // Use severity from parsed_data
+			Status:      "pending",
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+			// AssignedTo is intentionally left empty
+			DueDate: time.Now().AddDate(0, 1, 0), // Default due date: 1 month from now
+		}
+
+		// Use Omit to skip the AssignedTo field
+		if err := s.db.Omit("AssignedTo").Create(&action).Error; err != nil {
+			log.Printf("Error creating action item: %v", err)
+			return err
+		}
+		log.Printf("Action item created: %s for document %s", action.Description, doc.ID)
+
+		docResult := model.DocumentRuleResult{
+			DocumentID: doc.ID,
+			RuleID:     rule.ID,
+			Status:     "fail",
+			Details:    datatypes.JSON(marshalResult(result)),
+			CreatedAt:  time.Now(),
+		}
+		if err := s.db.Create(&docResult).Error; err != nil {
+			log.Printf("Error creating document rule result: %v", err)
+			return err
+		}
+		log.Printf("Document rule result created for rule %s, document %s", ruleName, doc.ID)
 	}
 	return nil
+}
+
+// Helper to marshal result into JSON bytes
+func marshalResult(result map[string]interface{}) []byte {
+	bytes, err := json.Marshal(result)
+	if err != nil {
+		log.Printf("[marshalResult] Error marshaling result: %v", err)
+		return []byte("{}")
+	}
+	return bytes
 }
 
 // GetPendingActionItemsWithTitles retrieves pending action items with document titles
@@ -266,13 +284,4 @@ func extractRuleName(explanation string) string {
 	// Final fallback
 	log.Printf("Could not extract rule name from explanation: %s", explanation)
 	return "Unknown Rule"
-}
-
-func marshalResult(result map[string]interface{}) []byte {
-	bytes, err := json.Marshal(result)
-	if err != nil {
-		log.Printf("[marshalResult] Error marshaling result: %v", err)
-		return []byte("{}")
-	}
-	return bytes
 }
