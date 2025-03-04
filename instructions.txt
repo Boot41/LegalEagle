@@ -1,1 +1,11 @@
 docker run -d   --name elasticsearch   -p 9200:9200   -p 9300:9300   -e "discovery.type=single-node"   -e "xpack.security.enabled=false"   -e "bootstrap.memory_lock=true"   -e "ES_JAVA_OPTS=-Xms512m -Xmx512m"   docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+
+Compliance Rules Manager
+Existing Rules
+Name	Pattern	Severity	Description
+Confidentiality Marking	Confidential	Low	The document must be marked as ''Confidential'' in the header or footer to indicate restricted access
+Data Protection Clause	data protection|privacy	medium	The document must include a clause addressing data protection, explicitly mentioning ''data protection'' or ''privacy'' to ensure compliance with data handling regulations.
+Signature Requirement	Signature:.*Date:	High	The document must include a signature line followed by a date field (e.g., ''Signature: ___ Date: ___'') to ensure proper execution.
+Payment Terms Specification	Payment due within.*days	Medium	The document must specify payment terms with a phrase like ''Payment due within 30 days'' to clarify financial obligations.
+Liability Clause Requirement	Liability.*limitation of liability	medium	The document must contain a Liability section with the phrase limitation of liability to define responsibility limits.
+NDA Check	non-disclosure agreement	high	Document must include the phrase 'non-disclosure agreement

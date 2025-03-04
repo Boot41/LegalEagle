@@ -36,16 +36,30 @@ func main() {
 
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())
-	router.POST("/upload", docController.UploadDocument)
-	// Compliance rules endpoints
-	router.POST("/rules", docController.AddComplianceRule)
+
+	// Global rate limiter for most routes
+	router.Use(middleware.GlobalRateLimiter.Limit())
+
+	// Sensitive routes with stricter rate limiting
+	router.POST("/upload",
+		middleware.StrictRateLimiter.Limit(),
+		docController.UploadDocument)
+
+	// Compliance rules endpoints with strict rate limiting
+	router.POST("/rules",
+		middleware.StrictRateLimiter.Limit(),
+		docController.AddComplianceRule)
+
 	router.GET("/rules", docController.GetAllComplianceRules)
 	router.POST("/rules/by-names", docController.GetComplianceRulesByNames)
+
 	// Other endpoints
 	router.GET("/search", docController.SearchDocuments)
-	router.GET("/dashboard", docController.GetAllDocuments) // Update route to /dashboard
+	router.GET("/dashboard", docController.GetAllDocuments)
 	router.GET("/action-items", docController.GetPendingActionItemsWithTitles)
-	router.PUT("/action-items/:id/complete", docController.CompleteActionItem)
+	router.PUT("/action-items/:id/complete",
+		middleware.StrictRateLimiter.Limit(),
+		docController.CompleteActionItem)
 
 	router.Run(":8080")
 }
