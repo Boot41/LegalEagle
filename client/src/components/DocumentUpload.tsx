@@ -217,7 +217,9 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
             fileUrl: result.fileURL,
             fileId: result.fileID,
             ocrText: result.ocrText || 'No text extracted',
-            complianceResults: result.complianceResults,
+            complianceResults: typeof result.complianceResults === 'string' 
+              ? result.complianceResults 
+              : JSON.stringify(result.complianceResults, null, 2),
             riskScore: result.riskScore,
             fileName: selectedFile.name,
             fileType: selectedFile.type,
@@ -270,26 +272,37 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
   };
 
   return (
-    <div className="glass-card w-full max-w-4xl mx-auto rounded-3xl overflow-hidden">
-      <div className="p-8 space-y-6 w-full">
-        <div className="border-2 border-dashed rounded-xl p-8 text-center max-w-3xl mx-auto">
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-              <Upload size={28} />
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="p-6 space-y-6 w-full bg-[#1C1C1C] rounded-2xl border border-gray-800 shadow-lg transition-all duration-300">
+        {/* Drop Zone */}
+        <div 
+          className={`
+            border-2 border-dashed rounded-xl p-8 
+            text-center max-w-3xl mx-auto 
+            transition-all duration-300 
+            ${selectedFile ? 'border-[#3ECF8E]/60 bg-[#3ECF8E]/5' : 'border-gray-700 hover:border-gray-500'}
+          `}
+        >
+          <div className="flex flex-col items-center justify-center space-y-5">
+            {/* Upload Icon */}
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#3ECF8E] to-[#7EDCB5] bg-opacity-10 flex items-center justify-center text-white">
+              <Upload size={32} className="text-[#3ECF8E]" />
             </div>
             
-            <div>
-              <h3 className="text-lg font-medium text-gray-700">
+            {/* File Info */}
+            <div className="mt-2">
+              <h3 className="text-xl font-semibold text-white">
                 {selectedFile ? selectedFile.name : 'Upload your document'}
               </h3>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-400 text-sm mt-2">
                 {selectedFile 
                   ? `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB - ${selectedFile.type}` 
                   : 'Supports PDF, JPG, PNG, GIF, TIFF (max 10MB)'}
               </p>
             </div>
             
-            <div className="flex items-center space-x-4">
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-4 mt-2">
               <div className="relative">
                 <input
                   ref={fileInputRef}
@@ -301,7 +314,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                   id="file-upload-input"
                 />
                 <button 
-                  className="btn-secondary py-2 px-4 rounded-lg cursor-pointer relative z-0"
+                  className="bg-[#2C2C2C] hover:bg-[#3C3C3C] text-white py-2 px-6 rounded-lg cursor-pointer relative z-0 transition-all duration-300 border border-gray-700"
                   type="button"
                 >
                   Browse Files
@@ -311,11 +324,11 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
               {selectedFile && (
                 <div className="relative">
                   <button 
-                    className="text-red-500 hover:text-red-700 transition-colors flex items-center relative z-0"
+                    className="text-red-400 hover:text-red-300 transition-colors flex items-center relative z-0 bg-red-900/20 hover:bg-red-900/30 py-2 px-4 rounded-lg"
                     type="button"
                     onClick={handleRemoveFile}
                   >
-                    <X size={20} className="mr-1" />
+                    <X size={18} className="mr-2" />
                     Remove
                   </button>
                 </div>
@@ -324,17 +337,25 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
           </div>
         </div>
 
+        {/* Upload Button */}
         <div className="flex justify-center relative max-w-3xl mx-auto">
           <button 
             onClick={handleUpload}
             disabled={!selectedFile || isLoading}
-            className="btn-primary flex items-center space-x-2 px-8 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed relative z-0"
+            className={`
+              flex items-center space-x-2 px-8 py-3 rounded-lg 
+              font-medium text-white 
+              transition-all duration-300 
+              ${!selectedFile || isLoading 
+                ? 'opacity-50 cursor-not-allowed bg-gray-700' 
+                : 'bg-gradient-to-r from-[#3ECF8E] to-[#7EDCB5] hover:shadow-lg hover:shadow-[#3ECF8E]/20'}
+            `}
             type="button"
           >
             {isLoading ? (
               <>
-                <Upload size={18} className="animate-spin" />
-                <span>Processing...</span>
+                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                <span>Processing Document...</span>
               </>
             ) : (
               <>
@@ -346,38 +367,40 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
         </div>
 
         {uploadResponse.error && (
-          <div className="text-red-500 text-center mt-4 flex items-center justify-center space-x-2 max-w-3xl mx-auto">
-            <AlertTriangle className="text-red-500" size={20} />
-            <span>{uploadResponse.error}</span>
+          <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 text-center mt-4 flex items-center justify-center space-x-3 max-w-3xl mx-auto">
+            <AlertTriangle className="text-red-400" size={20} />
+            <span className="text-red-300">{uploadResponse.error}</span>
           </div>
         )}
 
         {uploadResponse.ocrText && (
           <div className="
-            mt-4 
+            mt-6 
             p-6 
-            bg-[#1C1C1C] 
+            bg-[#2C2C2C] 
             border 
-            border-gray-800 
+            border-gray-700 
             rounded-2xl 
             shadow-lg 
             transition-all 
-            hover:border-green-500/30
+            hover:border-[#3ECF8E]/30
             max-w-4xl
             mx-auto
           ">
-            <div className="flex items-center space-x-4 mb-4">
+            <div className="flex items-center space-x-4 mb-5">
               <div className="
                 w-12 
                 h-12 
                 rounded-xl 
                 bg-gradient-to-br 
-                from-green-500 
-                to-blue-500 
+                from-[#3ECF8E] 
+                to-[#7EDCB5] 
                 flex 
                 items-center 
                 justify-center 
                 text-white
+                shadow-lg
+                shadow-[#3ECF8E]/20
               ">
                 <FileText size={24} />
               </div>
@@ -387,16 +410,19 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
             </div>
             
             <div className="
-              bg-[#121212] 
+              bg-[#1C1C1C] 
               border 
-              border-gray-800 
+              border-gray-700 
               rounded-lg 
-              p-4 
-              max-h-64 
+              p-5 
+              max-h-80 
               overflow-y-auto 
               text-gray-300 
               leading-relaxed 
               tracking-wide
+              scrollbar-thin
+              scrollbar-thumb-gray-700
+              scrollbar-track-[#1C1C1C]
             ">
               <p className="whitespace-pre-wrap break-words">
                 {uploadResponse.ocrText}
@@ -404,29 +430,36 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
             </div>
 
             {uploadResponse.complianceResults && (
-              <div className="mt-4">
-                <h3 className="text-lg font-bold text-white">
+              <div className="mt-5 bg-[#1C1C1C] border border-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-bold text-[#3ECF8E] mb-2">
                   Compliance Results
                 </h3>
-                <p className="text-gray-300">
+                <pre className="text-gray-300 whitespace-pre-wrap overflow-auto max-h-[300px] text-sm
+                  scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-[#1C1C1C]">
                   {uploadResponse.complianceResults}
-                </p>
+                </pre>
               </div>
             )}
 
             {uploadResponse.riskScore !== undefined && (
-              <div className="mt-4">
-                <h3 className="text-lg font-bold text-white">
+              <div className="mt-4 bg-[#1C1C1C] border border-gray-700 rounded-lg p-4">
+                <h3 className="text-lg font-bold text-[#3ECF8E] mb-2">
                   Risk Score
                 </h3>
-                <p className="text-gray-300">
-                  {uploadResponse.riskScore}
-                </p>
+                <div className="flex items-center">
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
+                    <div 
+                      className="bg-gradient-to-r from-[#3ECF8E] to-[#7EDCB5] h-2.5 rounded-full" 
+                      style={{ width: `${Math.min(100, uploadResponse.riskScore)}%` }}
+                    ></div>
+                  </div>
+                  <span className="ml-3 text-white font-medium">{uploadResponse.riskScore}%</span>
+                </div>
               </div>
             )}
 
             {uploadResponse.fileUrl && (
-              <div className="mt-4 flex justify-end">
+              <div className="mt-5 flex justify-end">
                 <a 
                   href={uploadResponse.fileUrl} 
                   target="_blank" 
@@ -435,19 +468,23 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({
                     inline-flex 
                     items-center 
                     space-x-2 
-                    px-4 
+                    px-5 
                     py-2 
                     bg-gradient-to-r 
-                    from-green-500/20 
-                    to-blue-500/20 
+                    from-[#3ECF8E]/20 
+                    to-[#7EDCB5]/20 
                     text-white 
                     rounded-lg 
-                    hover:from-green-500/30 
-                    hover:to-blue-500/30 
+                    hover:from-[#3ECF8E]/30 
+                    hover:to-[#7EDCB5]/30 
                     transition-all
+                    border
+                    border-[#3ECF8E]/30
+                    shadow-sm
+                    hover:shadow-[#3ECF8E]/20
                   "
                 >
-                  <Upload size={16} />
+                  <FileText size={16} />
                   <span>View Original Document</span>
                 </a>
               </div>

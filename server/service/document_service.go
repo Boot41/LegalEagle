@@ -156,6 +156,9 @@ func (s *DocumentService) UploadAndProcessDocument(file multipart.File, header *
 			log.Printf("ERROR checking rule compliance for %s: %v", rule.Name, err)
 			continue
 		}
+		// Ensure rule name and severity are included in the result
+		result["rule_name"] = rule.Name
+		result["severity"] = rule.Severity
 		complianceResults = append(complianceResults, result)
 		log.Printf("Compliance result for %s: %+v", rule.Name, result)
 	}

@@ -321,28 +321,8 @@ const Dashboard = () => {
         );
     }
 
-    if (filteredAndSortedDocuments.length === 0) {
-        return (
-            <div className="min-h-screen bg-[#121212] flex items-center justify-center">
-                <EmptyState 
-                    title="No Documents Found" 
-                    description="Your document dashboard is empty. Start by uploading your first document for compliance analysis."
-                    action={
-                        <button 
-                            className="bg-[#2C9ED4] text-white px-6 py-2 rounded-lg
-                              hover:bg-[#3AACF0] transition-all duration-200
-                              focus:outline-none focus:ring-2 focus:ring-[#2C9ED4] focus:ring-offset-2
-                              focus:ring-offset-[#121212]
-                              flex items-center space-x-2"
-                        >
-                            <File className="w-4 h-4" />
-                            <span>Upload Document</span>
-                        </button>
-                    }
-                />
-            </div>
-        );
-    }
+    // We'll keep the main layout and just show an empty state in the content area
+    // This ensures the search bar remains visible even when no documents are found
 
     return (
         <motion.div 

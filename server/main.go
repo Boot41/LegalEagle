@@ -37,7 +37,11 @@ func main() {
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())
 	router.POST("/upload", docController.UploadDocument)
+	// Compliance rules endpoints
 	router.POST("/rules", docController.AddComplianceRule)
+	router.GET("/rules", docController.GetAllComplianceRules)
+	router.POST("/rules/by-names", docController.GetComplianceRulesByNames)
+	// Other endpoints
 	router.GET("/search", docController.SearchDocuments)
 	router.GET("/dashboard", docController.GetAllDocuments) // Update route to /dashboard
 	router.GET("/action-items", docController.GetPendingActionItemsWithTitles)

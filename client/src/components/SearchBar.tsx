@@ -333,6 +333,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                 <motion.div
                   key={result.id}
                   whileHover={{ scale: 1.02 }}
+                  onClick={() => toggleResultExpansion(result.id)}
                   className="
                     bg-[#2C2C2C] 
                     border 
@@ -342,6 +343,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                     hover:border-green-500/50 
                     transition-all 
                     duration-300
+                    cursor-pointer
                   "
                 >
                   <div className="flex justify-between items-center">
@@ -359,7 +361,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => toggleResultExpansion(result.id)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent card expansion
+                        openFileInNewTab(result.document_url);
+                      }}
                       className="
                         text-green-500 
                         hover:text-green-400 

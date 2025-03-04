@@ -16,7 +16,16 @@ interface UploadedDocument {
 }
 
 const DocumentAnalysisPage: React.FC = () => {
-  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([]);
+  // Initialize with an empty document to allow access to insights and analysis before upload
+  const [uploadedDocuments, setUploadedDocuments] = useState<UploadedDocument[]>([
+    {
+      id: 'default',
+      name: 'Sample Document',
+      type: 'text/plain',
+      size: 0,
+      uploadedAt: new Date()
+    }
+  ]);
   const [activeView, setActiveView] = useState<'upload' | 'analysis' | 'insights'>('upload');
   const [uploadedText, setUploadedText] = useState<string>('');
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -33,8 +42,14 @@ const DocumentAnalysisPage: React.FC = () => {
       uploadedAt: new Date()
     };
 
-    // Update the list of uploaded documents
-    setUploadedDocuments(prevDocuments => [...prevDocuments, newDocument]);
+    // Replace sample document with the newly uploaded document
+    const hasDefaultDocument = uploadedDocuments.some(doc => doc.id === 'default');
+    if (hasDefaultDocument) {
+      setUploadedDocuments([newDocument]);
+    } else {
+      // Add to existing documents if no default document exists
+      setUploadedDocuments(prevDocuments => [...prevDocuments, newDocument]);
+    }
 
     // Set the OCR text and switch to analysis view
     setUploadedText(ocrText);
@@ -205,172 +220,156 @@ const DocumentAnalysisPage: React.FC = () => {
       {/* Document Info Modal */}
       <DocumentInfoModal />
 
-      {/* Heading Card */}
+      {/* Streamlined Header with Navigation Tabs */}
       <motion.div
-        initial={{ y: 50, opacity: 0 }}
+        initial={{ y: 30, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        whileHover={{ 
-          scale: 1.02, 
-          boxShadow: "0 25px 50px -12px rgba(62, 207, 142, 0.3)"
-        }}
         className="bg-[#1C1C1C] 
           rounded-2xl 
           overflow-hidden 
-          border border-gray-900 
+          border border-gray-800 
           transition-all duration-300 
-          hover:border-[#3ECF8E]
-          grid grid-cols-1 md:grid-cols-2
-          gap-8
-          p-8"
+          shadow-lg
+          p-6"
       >
-        <div className="flex flex-col justify-center space-y-6">
-          <motion.h1 
-            className="text-5xl font-black 
-              bg-gradient-to-br from-[#3ECF8E] to-[#7EDCB5] 
-              bg-clip-text text-transparent
-              tracking-tighter
-              font-['Clash_Display', 'Inter', 'system-ui']
-              drop-shadow-[0_5px_5px_rgba(62,207,142,0.2)]
-              uppercase
-              leading-[1.1]"
-          >
-            Document Intelligence
-          </motion.h1>
-          
-          <p className="text-lg text-gray-300 leading-relaxed">
-            Transform your documents with AI-powered analysis. 
-            Upload, analyze, and gain actionable insights instantly 
-            with our advanced document intelligence platform.
-          </p>
-          
-          <div className="flex flex-wrap gap-3 items-center">
-            <button 
-              onClick={() => setActiveView('upload')}
-              className={`px-6 py-3 rounded-lg transition-all duration-300 flex items-center space-x-2
-                ${activeView === 'upload' 
-                  ? 'bg-[#3ECF8E] text-white hover:bg-[#4ADBA2]' 
-                  : 'bg-[#1C1C1C] text-[#3ECF8E] border border-[#3ECF8E] hover:bg-[#3ECF8E]/10'
-                }`}
-            >
-              <Upload className="w-5 h-5" />
-              <span>Upload Document</span>
-            </button>
-            
-            <button 
-              onClick={() => setActiveView('insights')}
-              className={`px-6 py-3 rounded-lg transition-all duration-300 flex items-center space-x-2
-                ${!uploadedText ? 'opacity-50 cursor-not-allowed' : ''}
-                ${activeView === 'insights' 
-                  ? 'bg-[#3ECF8E] text-white hover:bg-[#4ADBA2]' 
-                  : 'bg-[#1C1C1C] text-[#3ECF8E] border border-[#3ECF8E] hover:bg-[#3ECF8E]/10'
-                }`}
-              disabled={!uploadedText}
-            >
-              <Zap className="w-5 h-5" />
-              <span>AI Insights</span>
-            </button>
-
-            <button 
-              onClick={() => setActiveView('analysis')}
-              className={`px-6 py-3 rounded-lg transition-all duration-300 flex items-center space-x-2
-                ${!uploadedText ? 'opacity-50 cursor-not-allowed' : ''}
-                ${activeView === 'analysis' 
-                  ? 'bg-[#3ECF8E] text-white hover:bg-[#4ADBA2]' 
-                  : 'bg-[#1C1C1C] text-[#3ECF8E] border border-[#3ECF8E] hover:bg-[#3ECF8E]/10'
-                }`}
-              disabled={!uploadedText}
-            >
-              <FileSearch className="w-5 h-5" />
-              <span>Document Analysis</span>
-            </button>
-
-            <div className="flex space-x-2">
-              <button 
-                onClick={() => setIsHelpModalOpen(true)}
-                className="text-[#3ECF8E] hover:bg-[#3ECF8E]/10 
-                p-2 rounded-full 
-                transition-all duration-300"
-                title="Help and Information"
-              >
-                <HelpCircle className="w-6 h-6" />
-              </button>
-
-              <button 
-                onClick={() => setIsDocumentInfoModalOpen(true)}
-                className="text-[#3ECF8E] hover:bg-[#3ECF8E]/10 
-                p-2 rounded-full 
-                transition-all duration-300"
-                title="Document Processing Guidelines"
-              >
-                <FileText className="w-6 h-6" />
-              </button>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-6">
+          <div className="flex items-center">
+            <div className="bg-gradient-to-br from-[#3ECF8E] to-[#7EDCB5] p-3 rounded-xl mr-4">
+              <FileCheck className="w-8 h-8 text-white" />
             </div>
+            <motion.h1 
+              className="text-3xl font-bold 
+                bg-gradient-to-br from-[#3ECF8E] to-[#7EDCB5] 
+                bg-clip-text text-transparent"
+            >
+              Document Intelligence
+            </motion.h1>
+          </div>
+          
+          <div className="flex space-x-2">
+            <button 
+              onClick={() => setIsHelpModalOpen(true)}
+              className="text-[#3ECF8E] hover:bg-[#3ECF8E]/10 
+              p-2 rounded-full 
+              transition-all duration-300"
+              title="Help and Information"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+
+            <button 
+              onClick={() => setIsDocumentInfoModalOpen(true)}
+              className="text-[#3ECF8E] hover:bg-[#3ECF8E]/10 
+              p-2 rounded-full 
+              transition-all duration-300"
+              title="Document Processing Guidelines"
+            >
+              <FileText className="w-5 h-5" />
+            </button>
           </div>
         </div>
         
-        <div className="flex items-center justify-center">
-          <motion.div
-            initial={{ rotate: 0 }}
-            animate={{ 
-              rotate: [0, 5, -5, 0],
-              transition: { 
-                duration: 5, 
-                repeat: Infinity, 
-                repeatType: "loop" 
-              }
-            }}
-            className="w-full max-w-[300px] aspect-square 
-            bg-gradient-to-br from-[#3ECF8E]/20 to-[#7EDCB5]/20 
-            rounded-2xl 
-            flex items-center justify-center"
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap gap-2 border-b border-gray-800 pb-4">
+          <button 
+            onClick={() => setActiveView('upload')}
+            className={`px-5 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2
+              ${activeView === 'upload' 
+                ? 'bg-[#3ECF8E] text-white' 
+                : 'bg-[#1C1C1C] text-gray-300 hover:bg-gray-800'
+              }`}
           >
-            <FileCheck className="w-32 h-32 text-[#3ECF8E] opacity-70" />
-          </motion.div>
+            <Upload className="w-4 h-4" />
+            <span>Upload</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveView('insights')}
+            className={`px-5 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2
+              ${activeView === 'insights' 
+                ? 'bg-[#3ECF8E] text-white' 
+                : 'bg-[#1C1C1C] text-gray-300 hover:bg-gray-800'
+              }`}
+          >
+            <FileSearch className="w-4 h-4" />
+            <span>Analysis</span>
+          </button>
+          
+          <button 
+            onClick={() => setActiveView('analysis')}
+            className={`px-5 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2
+              ${activeView === 'analysis' 
+                ? 'bg-[#3ECF8E] text-white' 
+                : 'bg-[#1C1C1C] text-gray-300 hover:bg-gray-800'
+              }`}
+          >
+            <Zap className="w-4 h-4" />
+            <span>AI Insights</span>
+          </button>
         </div>
       </motion.div>
 
-      {/* Dynamic Content Area */}
-      <div className="glass-card p-6 rounded-xl border border-gray-800">
-        {activeView === 'upload' ? (
-          <div className="w-full max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold mb-6 text-white flex items-center">
-              <div className="
-                w-10 
-                h-10 
-                rounded-xl 
-                bg-gradient-to-br 
-                from-green-500 
-                to-blue-500 
-                flex 
-                items-center 
-                justify-center 
-                text-white 
-                mr-3
-              ">
-                <Upload size={20} />
+      {/* Dynamic Content Area - Simplified with consistent styling */}
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        className="bg-[#1C1C1C] p-6 rounded-xl border border-gray-800 shadow-md"
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeView}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            {activeView === 'upload' ? (
+              <div className="w-full max-w-4xl mx-auto">
+                <div className="mb-6 flex items-center">
+                  <div className="
+                    w-10
+                    h-10
+                    rounded-xl
+                    bg-gradient-to-br
+                    from-[#3ECF8E]
+                    to-[#7EDCB5]
+                    flex
+                    items-center
+                    justify-center
+                    text-white
+                    mr-4
+                    shadow-md
+                    shadow-[#3ECF8E]/20
+                  ">
+                    <Upload size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Upload Document</h2>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Upload your legal documents for AI-powered analysis and insights
+                    </p>
+                  </div>
+                </div>
+                <DocumentUpload 
+                  onUpload={(ocrText, uploadResponse) => handleDocumentUpload(ocrText, uploadResponse)} 
+                  title="" 
+                />
               </div>
-              Upload New Document
-            </h2>
-            <p className="text-gray-400 mb-8">
-              Upload your legal documents for AI-powered analysis and insights. We support PDF, JPEG, PNG, and other common formats.
-            </p>
-            <DocumentUpload 
-              onUpload={(ocrText, uploadResponse) => handleDocumentUpload(ocrText, uploadResponse)} 
-              title="Upload Document for Analysis" 
-            />
-          </div>
-        ) : activeView === 'insights' ? (
-          <AIDocumentInsights 
-            documents={uploadedDocuments}
-          />
-        ) : (
-          <DocumentAnalysisContainer 
-            ocrText={uploadedText} 
-            onNewUpload={handleNewUpload}
-            uploadedDocuments={uploadedDocuments}
-          />
-        )}
-      </div>
+            ) : activeView === 'insights' ? (
+              <AIDocumentInsights 
+                documents={uploadedDocuments}
+              />
+            ) : (
+              <DocumentAnalysisContainer 
+                ocrText={uploadedText} 
+                onNewUpload={handleNewUpload}
+                uploadedDocuments={uploadedDocuments}
+              />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 };

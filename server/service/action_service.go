@@ -113,7 +113,7 @@ func (s *DocumentService) UpdateActionItem(actionID string) error {
 
 	action.Status = "completed"
 	action.UpdatedAt = time.Now()
-	
+
 	// Use Omit to skip the AssignedTo field to avoid UUID validation error
 	if err := s.db.Model(&action).Omit("AssignedTo").Updates(map[string]interface{}{
 		"Status":    "completed",
@@ -128,12 +128,75 @@ func (s *DocumentService) UpdateActionItem(actionID string) error {
 		log.Printf("[UpdateActionItem] Error fetching document rule result for action %s: %v", actionID, err)
 		return err
 	}
+
+	// Update status to resolved and set explanation to "No issues" in Details JSON
 	docResult.Status = "resolved"
+
+	// Parse the current Details JSON
+	details := make(map[string]interface{})
+	if len(docResult.Details) > 0 {
+		if err := json.Unmarshal(docResult.Details, &details); err != nil {
+			log.Printf("[UpdateActionItem] Error unmarshaling Details JSON: %v", err)
+			// Create a new map if unmarshaling fails
+			details = make(map[string]interface{})
+		}
+	}
+
+	// Update the explanation
+	details["explanation"] = "No issues"
+
+	// Marshal back to JSON
+	updatedDetails, err := json.Marshal(details)
+	if err != nil {
+		log.Printf("[UpdateActionItem] Error marshaling updated Details: %v", err)
+		return err
+	}
+
+	docResult.Details = datatypes.JSON(updatedDetails)
 	docResult.CreatedAt = time.Now() // Consider adding UpdatedAt to the model
+
 	if err := s.db.Save(&docResult).Error; err != nil {
 		log.Printf("[UpdateActionItem] Error updating document rule result for action %s: %v", actionID, err)
 		return err
 	}
+
+	// Update the document's parsed_data field to set status to true
+	var doc model.Document
+	if err := s.db.First(&doc, "id = ?", action.DocumentID).Error; err != nil {
+		log.Printf("[UpdateActionItem] Error fetching document %s: %v", action.DocumentID, err)
+		return err
+	}
+
+	// Get current parsed data as map
+	parsedData := make(map[string]interface{})
+	if len(doc.ParsedData) > 0 {
+		if err := json.Unmarshal(doc.ParsedData, &parsedData); err != nil {
+			log.Printf("[UpdateActionItem] Error unmarshaling parsed data for document %s: %v", action.DocumentID, err)
+			// Continue even if there's an error with the parsed data
+			parsedData = make(map[string]interface{})
+		}
+	}
+
+	// Update status to true
+	parsedData["status"] = true
+
+	// Marshal back to JSON
+	updatedParsedData, err := json.Marshal(parsedData)
+	if err != nil {
+		log.Printf("[UpdateActionItem] Error marshaling updated parsed data for document %s: %v", action.DocumentID, err)
+		return err
+	}
+
+	// Update the document
+	if err := s.db.Model(&doc).Updates(map[string]interface{}{
+		"ParsedData": updatedParsedData,
+		"UpdatedAt":  time.Now(),
+	}).Error; err != nil {
+		log.Printf("[UpdateActionItem] Error updating document %s parsed data: %v", action.DocumentID, err)
+		return err
+	}
+
+	log.Printf("[UpdateActionItem] Successfully updated document %s parsed_data status to true", action.DocumentID)
 	return nil
 }
 

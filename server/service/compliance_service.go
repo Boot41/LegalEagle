@@ -25,7 +25,20 @@ func (s *DocumentService) AddComplianceRule(rule *model.ComplianceRule) error {
 
 // DetermineApplicableRules uses Groq to suggest relevant rules
 func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, error) {
-	log.Printf("Determining applicable rules for text: %s", ocrText)
+	// First, try to get all available rules from the database
+	allRules, err := s.GetAllComplianceRules()
+	if err != nil {
+		log.Printf("ERROR retrieving compliance rules: %v", err)
+		return nil, err
+	}
+	log.Println("Retrieved all compliance rules from database:", allRules)
+
+	// Extract rule names for AI suggestion
+	var ruleNames []string
+	for _, rule := range allRules {
+		ruleNames = append(ruleNames, rule.Name)
+	}
+	log.Println("Extracted rule names for AI suggestion:", ruleNames)
 
 	groqAPIKey := os.Getenv("VITE_GROQ_API_KEY")
 	if groqAPIKey == "" {
@@ -33,7 +46,9 @@ func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, er
 		return nil, fmt.Errorf("VITE_GROQ_API_KEY environment variable is not set")
 	}
 
-	prompt := fmt.Sprintf("Given this document text: %s\nSuggest relevant compliance rules from: NDA Check, Liability Clause, Signature Requirement. Return a JSON list of rule names.", ocrText)
+	// More open-ended prompt to allow AI to suggest rules dynamically
+	prompt := fmt.Sprintf("Analyze this document text and suggest relevant legal compliance rules to check from the following list: %v. Provide a JSON list of rule names based on the document's content:\n\n%s",
+		ruleNames, ocrText)
 	log.Printf("Groq API Prompt: %s", prompt)
 
 	reqBody, _ := json.Marshal(map[string]interface{}{
@@ -45,7 +60,10 @@ func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, er
 		},
 		"model":       "llama-3.3-70b-versatile",
 		"temperature": 0.7,
-		"max_tokens":  150,
+		"max_tokens":  250,
+		"response_format": map[string]string{
+			"type": "json_object",
+		},
 	})
 
 	req, err := http.NewRequest("POST", "https://api.groq.com/openai/v1/chat/completions", bytes.NewBuffer(reqBody))
@@ -98,9 +116,9 @@ func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, er
 		}
 	}
 
-	// If no rules found, use default
+	// If no rules found, use a more generic fallback
 	if len(applicableRules) == 0 {
-		applicableRules = []string{"NDA Check", "Liability Clause", "Signature Requirement"}
+		applicableRules = []string{"General Compliance", "Document Review"}
 	}
 
 	log.Printf("Determined Applicable Rules: %v", applicableRules)
@@ -109,7 +127,15 @@ func (s *DocumentService) DetermineApplicableRules(ocrText string) ([]string, er
 
 // Helper function to extract rules from text if JSON parsing fails
 func extractRulesFromText(content string) []string {
-	possibleRules := []string{"NDA Check", "Liability Clause", "Signature Requirement"}
+	// More generic rule extraction
+	possibleRules := []string{
+		"Confidentiality",
+		"Non-Disclosure",
+		"Signature Requirement",
+		"Liability",
+		"Compliance",
+		"Legal Review",
+	}
 	foundRules := []string{}
 
 	for _, rule := range possibleRules {
@@ -209,8 +235,36 @@ func (s *DocumentService) CheckRuleCompliance(ocrText, ruleName, rulePattern str
 		}
 	}
 
+	// Add the rule name to the result
+	complianceResult["rule_name"] = ruleName
 	log.Printf("Rule Compliance Result: %+v", complianceResult)
 	return complianceResult, nil
+}
+
+// GetAllComplianceRules retrieves all compliance rules from the database
+func (s *DocumentService) GetAllComplianceRules() ([]model.ComplianceRule, error) {
+	var rules []model.ComplianceRule
+	result := s.db.Find(&rules)
+	if result.Error != nil {
+		log.Printf("ERROR fetching compliance rules: %v", result.Error)
+		return nil, result.Error
+	}
+
+	log.Printf("Retrieved %d compliance rules from database", len(rules))
+	return rules, nil
+}
+
+// GetComplianceRulesByNames retrieves specific compliance rules by their names
+func (s *DocumentService) GetComplianceRulesByNames(ruleNames []string) ([]model.ComplianceRule, error) {
+	var rules []model.ComplianceRule
+	result := s.db.Where("name IN ?", ruleNames).Find(&rules)
+	if result.Error != nil {
+		log.Printf("ERROR fetching compliance rules by names: %v", result.Error)
+		return nil, result.Error
+	}
+
+	log.Printf("Retrieved %d compliance rules for names: %v", len(rules), ruleNames)
+	return rules, nil
 }
 
 // CalculateRiskScore computes a score based on failed rules and their severity
@@ -224,6 +278,12 @@ func (s *DocumentService) CalculateRiskScore(results []map[string]interface{}, r
 	}
 	riskScore := 0.0
 
+	// Create a map of rule names to rules for easier lookup
+	ruleMap := make(map[string]model.ComplianceRule)
+	for _, rule := range rules {
+		ruleMap[rule.Name] = rule
+	}
+
 	for i, result := range results {
 		log.Printf("Processing result %d: %+v", i, result)
 
@@ -233,10 +293,23 @@ func (s *DocumentService) CalculateRiskScore(results []map[string]interface{}, r
 			continue
 		}
 
-		if status == "fail" {
+		// Get the rule name from the result
+		ruleName, ok := result["rule_name"].(string)
+		if !ok {
+			log.Printf("WARNING: Could not extract rule_name from result %d", i)
+			// Fallback to using the index if available
 			if i < len(rules) {
-				ruleSeverity := rules[i].Severity
-				log.Printf("Failed rule severity: %s", ruleSeverity)
+				ruleName = rules[i].Name
+			} else {
+				continue
+			}
+		}
+
+		if status == "fail" {
+			rule, exists := ruleMap[ruleName]
+			if exists {
+				ruleSeverity := rule.Severity
+				log.Printf("Failed rule %s with severity: %s", ruleName, ruleSeverity)
 
 				weight, exists := severityWeights[ruleSeverity]
 				if !exists {
@@ -247,7 +320,7 @@ func (s *DocumentService) CalculateRiskScore(results []map[string]interface{}, r
 				riskScore += weight
 				log.Printf("Updated risk score: %f", riskScore)
 			} else {
-				log.Printf("WARNING: Rule index %d out of bounds", i)
+				log.Printf("WARNING: Rule '%s' not found in rule map", ruleName)
 			}
 		}
 	}
