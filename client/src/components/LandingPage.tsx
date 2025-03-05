@@ -401,6 +401,8 @@ const AdvancedFeaturesSection: React.FC = () => {
   );
 };
 
+// import { Link } from 'react-router-dom';
+
 const LandingPage: React.FC = () => {
   return (
     <motion.div 
@@ -479,6 +481,7 @@ const LandingPage: React.FC = () => {
               className="flex justify-center space-x-6"
             >
               <motion.button 
+                onClick={() => window.location.href='/document'}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="
@@ -500,6 +503,7 @@ const LandingPage: React.FC = () => {
                 <ArrowRight size={24} className="ml-2" />
               </motion.button>
               <motion.button 
+                              onClick={() => window.location.href='/compliance'}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="
@@ -518,7 +522,7 @@ const LandingPage: React.FC = () => {
                   space-x-3
                 "
               >
-                Learn More
+                Compliance Rules
               </motion.button>
             </motion.div>
           </motion.div>

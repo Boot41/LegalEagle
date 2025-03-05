@@ -68,7 +68,7 @@ const Header = () => {
                 Search
               </Link>
             </li>
-            <li>
+            {/* <li>
               <Link 
                 to="/document" 
                 className={`
@@ -84,15 +84,27 @@ const Header = () => {
                 <DocumentIcon size={18} className="mr-2" />
                 Document
               </Link>
-            </li>
+            </li> */}
             <li>
-              <a 
-                href="#" 
-                className="btn-primary px-5 py-2 rounded-lg flex items-center font-semibold"
-              >
-                Get Started
-                <ChevronRight size={16} className="ml-2" />
-              </a>
+              <nav className="flex space-x-4"> 
+                <Link to="/dashboard" className="btn-primary px-5 py-2 rounded-lg flex items-center font-semibold ${location.pathname === '/dashboard' ? 'text-green-400' : ''}">
+                  <DocumentIcon size={18} className="mr-2" />
+                  Dashboard
+                  <ChevronRight size={16} className="ml-2" />
+                </Link>
+
+                <Link to="/action-items" className="btn-primary px-5 py-2 rounded-lg flex items-center font-semibold ${location.pathname === '/action-items' ? 'text-green-400' : ''}">
+                  <DocumentIcon size={18} className="mr-2" />
+                  Action Items
+                  <ChevronRight size={16} className="ml-2" />
+                </Link>
+
+                {/* <Link to="/compliance" className="btn-primary px-5 py-2 rounded-lg flex items-center font-semibold ${location.pathname === '/compliance' ? 'text-green-400' : ''}">
+                  <DocumentIcon size={18} className="mr-2" />
+                  Compliance
+                  <ChevronRight size={16} className="ml-2" />
+                </Link> */}
+              </nav>
             </li>
           </ul>
         </nav>
