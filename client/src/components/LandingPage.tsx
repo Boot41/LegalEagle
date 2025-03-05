@@ -1,4 +1,5 @@
 import React from 'react';
+import '../index.css';
 import { motion } from 'framer-motion';
 import { 
   // Search, 
@@ -17,6 +18,9 @@ import {
   Lock,
   // CheckCircle
 } from 'lucide-react';
+import InnovationShowcaseSection from './InnovationShowcaseSection';
+import TechnologyTimelineSection from './TechnologyTimelineSection';
+import ClientImpactSection from './ClientImpactSection';
 
 // import DocumentAnalysisContainer from './DocumentAnalysisContainer';
 // import SearchBar from './SearchBar';
@@ -265,15 +269,16 @@ const FeaturesSection: React.FC = () => {
       whileInView="visible"
       exit="exit"
       viewport={{ amount: 0.1 }}
-      className="mb-24"
+      className="mt-24 mb-24"
     >
       <h2 className="
-        text-4xl 
+        text-5xl 
         font-extrabold 
         text-center 
-        mb-16 
+        mb-20 
         gradient-text 
         tracking-tighter
+        leading-tight
       ">
         Powerful Features
       </h2>
@@ -313,15 +318,16 @@ const BenefitsSection: React.FC = () => {
       whileInView="visible"
       exit="exit"
       viewport={{ amount: 0.1 }}
-      className="mt-36 mb-24"
+      className="mt-24 mb-24"
     >
       <h2 className="
-        text-4xl 
+        text-5xl 
         font-extrabold 
         text-center 
-        mb-16 
+        mb-20 
         gradient-text 
         tracking-tighter
+        leading-tight
       ">
         Why Choose LegalEagle
       </h2>
@@ -364,12 +370,13 @@ const AdvancedFeaturesSection: React.FC = () => {
       className="mt-24 mb-24"
     >
       <h2 className="
-        text-4xl 
+        text-5xl 
         font-extrabold 
         text-center 
-        mb-16 
+        mb-20 
         gradient-text 
         tracking-tighter
+        leading-tight
       ">
         Advanced Capabilities
       </h2>
@@ -404,6 +411,7 @@ const AdvancedFeaturesSection: React.FC = () => {
 // import { Link } from 'react-router-dom';
 
 const LandingPage: React.FC = () => {
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -419,7 +427,7 @@ const LandingPage: React.FC = () => {
           whileInView="visible"
           exit="exit"
           viewport={{ amount: 0.1 }}
-          className="text-center mb-20"
+          className="text-center mb-30 py-10"
         >
           <motion.div 
             variants={appleScrollVariants}
@@ -531,8 +539,15 @@ const LandingPage: React.FC = () => {
         {/* Search and Upload Section */}
         {/* <SearchAndUploadSection /> */}
 
+        <TechnologyTimelineSection/>
+
         {/* Features Section */}
         <FeaturesSection />
+
+        <ClientImpactSection/>
+
+        <InnovationShowcaseSection/>
+
 
         {/* Benefits Section */}
         <BenefitsSection />

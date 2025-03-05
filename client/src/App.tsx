@@ -11,6 +11,21 @@ import ComplianceRuleManager from './components/ComplianceRuleManager';
 import './index.css';
 
 const App: React.FC = () => {
+//   useEffect(() => {
+//     const handleScroll = () => {
+//         const scrollPosition = window.scrollY;
+//         if (scrollPosition > 50) { // Change this value based on when you want the effect to start
+//             document.body.classList.add('streak-effect');
+//         } else {
+//             document.body.classList.remove('streak-effect');
+//         }
+//     };
+
+//     window.addEventListener('scroll', handleScroll);
+//     return () => {
+//         window.removeEventListener('scroll', handleScroll);
+//     };
+// }, []);
   return (
     <BrowserRouter>
       <Routes>

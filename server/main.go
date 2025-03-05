@@ -59,6 +59,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
+	router.POST("/action-update/:id", docController.AssignActionItem)
 	// Other endpoints
 	router.GET("/search", docController.SearchDocuments)
 	router.GET("/dashboard", docController.GetAllDocuments)

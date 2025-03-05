@@ -7,7 +7,7 @@ type ActionItem struct {
 	DocumentID  string `gorm:"type:uuid"`
 	RuleID      string `gorm:"type:uuid"`
 	Description string `gorm:"not null"`
-	AssignedTo  string `gorm:"type:uuid"`
+	AssignedTo  string `gorm:"type:string"`
 	Status      string
 	Priority    string
 	DueDate     time.Time

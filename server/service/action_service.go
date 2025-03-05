@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	model "github.com/Itish41/LegalEagle/models"
+	"github.com/resend/resend-go/v2"
 	"gorm.io/datatypes"
 )
 
@@ -89,6 +91,48 @@ func marshalResult(result map[string]interface{}) []byte {
 		return []byte("{}")
 	}
 	return bytes
+}
+
+// AssignAndNotifyActionItem updates the AssignedTo field of an action item and sends an email notification.
+func (s *DocumentService) AssignAndNotifyActionItem(actionID string, email string) error {
+	// Retrieve the action item from the database.
+	var action model.ActionItem
+	if err := s.db.First(&action, "id = ?", actionID).Error; err != nil {
+		log.Printf("[AssignAndNotifyActionItem] Error fetching action item %s: %v", actionID, err)
+		return err
+	}
+
+	// Update the AssignedTo field.
+	action.AssignedTo = email
+	action.UpdatedAt = time.Now()
+	if err := s.db.Model(&action).Update("AssignedTo", email).Error; err != nil {
+		log.Printf("[AssignAndNotifyActionItem] Error updating AssignedTo for action item %s: %v", actionID, err)
+		return err
+	}
+	log.Printf("[AssignAndNotifyActionItem] Updated AssignedTo to %s for action item %s", email, actionID)
+
+	// Set up the Resend client.
+	ctx := context.TODO()
+	// Replace the API key with your actual Resend API key or load it from configuration.
+	client := resend.NewClient("re_NhKydByt_8pSB2riSRbk1c2PfMXG9scPG")
+
+	// Prepare the email parameters.
+	params := &resend.SendEmailRequest{
+		From:    "Acme <onboarding@resend.dev>",
+		To:      []string{email},
+		Subject: fmt.Sprintf("Action Item Assigned: %s", action.Description),
+		Html:    fmt.Sprintf("<p>You have been assigned the following action item:<br>%s</p>", action.Description),
+	}
+
+	// Send the email.
+	sent, err := client.Emails.SendWithContext(ctx, params)
+	if err != nil {
+		log.Printf("[AssignAndNotifyActionItem] Error sending email for action item %s: %v", actionID, err)
+		return err
+	}
+	log.Printf("[AssignAndNotifyActionItem] Email sent successfully. Email ID: %s", sent.Id)
+
+	return nil
 }
 
 // GetPendingActionItemsWithTitles retrieves pending action items with document titles

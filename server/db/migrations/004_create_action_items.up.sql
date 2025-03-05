@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS action_items (
     document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
     rule_id UUID REFERENCES compliance_rules(id) ON DELETE CASCADE,
     description TEXT NOT NULL,
-    assigned_to UUID,
+    assigned_to VARCHAR(20),
     status VARCHAR(20),
     priority VARCHAR(20),
     due_date TIMESTAMP WITH TIME ZONE,
