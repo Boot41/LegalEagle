@@ -9,7 +9,7 @@ import (
 
 func LoadEnv() error {
 	log.Println("Loading env file")
-	err := godotenv.Load("../.env") // using the joho library to load variables from the .env file
+	err := godotenv.Load() // using the joho library to load variables from the .env file
 	if err != nil {
 		log.Println("env not loading")
 		return fmt.Errorf("env not loading")

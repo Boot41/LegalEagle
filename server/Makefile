@@ -1,5 +1,5 @@
 .DEFAULT_GOAL:=run
-.PHONY=fmt vet tidy build run
+.PHONY=fmt vet tidy build 
 fmt:
 	go fmt ./...
 vet: fmt
@@ -8,5 +8,4 @@ tidy: vet
 	go mod tidy
 build: tidy
 	go build
-run: build
-	go run main.go
+

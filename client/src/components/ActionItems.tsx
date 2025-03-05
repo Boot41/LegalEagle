@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle, ClipboardList, FileText } from 'lucide-react';
+import { CheckCircle, ClipboardList, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Define interface for Action Item

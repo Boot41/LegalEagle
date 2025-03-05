@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Spinner, EmptyState } from './ui/Loader';
 import { 
@@ -6,7 +6,7 @@ import {
     RefreshCw, 
     HelpCircle, 
     FileCheck, 
-    File 
+    // File 
 } from 'lucide-react';
 
 interface ComplianceResult {
@@ -31,14 +31,14 @@ interface Document {
     file_type?: string;
 }
 
-const getComplianceColor = (status: string): string => {
-    switch(status?.toLowerCase()) {
-        case 'pass': return 'text-green-500 bg-green-900 bg-opacity-20';
-        case 'fail': return 'text-red-500 bg-red-900 bg-opacity-20';
-        case 'warning': return 'text-yellow-500 bg-yellow-900 bg-opacity-20';
-        default: return 'text-gray-500 bg-gray-900 bg-opacity-20';
-    }
-};
+// const getComplianceColor = (status: string): string => {
+//     switch(status?.toLowerCase()) {
+//         case 'pass': return 'text-green-500 bg-green-900 bg-opacity-20';
+//         case 'fail': return 'text-red-500 bg-red-900 bg-opacity-20';
+//         case 'warning': return 'text-yellow-500 bg-yellow-900 bg-opacity-20';
+//         default: return 'text-gray-500 bg-gray-900 bg-opacity-20';
+//     }
+// };
 
 // Supabase-inspired Compliance Badge
 const ComplianceBadge = ({ status, ruleName }: { status: string, ruleName?: string }) => {

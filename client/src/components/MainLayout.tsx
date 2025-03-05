@@ -13,9 +13,9 @@ import {
   useLocation 
 } from 'react-router-dom';
 
-import SearchBar from './SearchBar';
-import DocumentAnalysisContainer from './DocumentAnalysisContainer';
-import LandingPage from './LandingPage';
+// import SearchBar from './SearchBar';
+// import DocumentAnalysisContainer from './DocumentAnalysisContainer';
+// import LandingPage from './LandingPage';
 
 const Header = () => {
   const location = useLocation();

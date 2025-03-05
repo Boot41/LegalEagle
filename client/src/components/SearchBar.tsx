@@ -6,7 +6,7 @@ import {
   Loader2, 
   AlertTriangle, 
   FileText,
-  Calendar,
+  // Calendar,
   ExternalLink
 } from 'lucide-react';
 
@@ -42,13 +42,13 @@ interface SearchBarProps {
   onSearch?: (query: string) => void;
 }
 
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
+// const formatFileSize = (bytes: number): string => {
+//   if (bytes === 0) return '0 Bytes';
+//   const k = 1024;
+//   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+//   const i = Math.floor(Math.log(bytes) / Math.log(k));
+//   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+// };
 
 const getFileIcon = (fileType?: string | null) => {
   const safeFileType = fileType?.toLowerCase() || 'default';
@@ -223,14 +223,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
     setExpandedResultId(prevId => prevId === resultId ? null : resultId);
   };
 
-  const clearSearch = () => {
-    setQuery('');
-    setSearchResults([]);
-    setError(null);
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
+  // const clearSearch = () => {
+  //   setQuery('');
+  //   setSearchResults([]);
+  //   setError(null);
+  //   if (inputRef.current) {
+  //     inputRef.current.focus();
+  //   }
+  // };
 
   const openFileInNewTab = (fileUrl: string) => {
     window.open(fileUrl, '_blank', 'noopener,noreferrer');

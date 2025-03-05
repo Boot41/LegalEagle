@@ -28,7 +28,7 @@ interface AIDocumentInsightsProps {
 
 const AIDocumentInsights: React.FC<AIDocumentInsightsProps> = ({ documents }) => {
   const [selectedDocument, setSelectedDocument] = useState<string | null>(null);
-  const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
+  // const [expandedDetails, setExpandedDetails] = useState<string | null>(null);
 
   // Use useState and useEffect to ensure consistent values across renders
   const [documentInsights, setDocumentInsights] = useState<any[]>([]);

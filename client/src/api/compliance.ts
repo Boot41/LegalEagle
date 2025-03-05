@@ -169,29 +169,29 @@ class ComplianceService {
     }
   }
 
-  // Generate mock compliance documents for development
-  private generateMockComplianceDocuments(): ComplianceDocument[] {
-    return [
-      {
-        id: '1741083892-Mocking Legal Agreement.pdf',
-        title: 'Mocking Legal Agreement',
-        fileType: 'pdf',
-        riskScore: 50,
-        riskLevel: 'Medium',
-        parsedData: [
-          {
-            rule_name: 'General Compliance',
-            status: 'pass',
-            severity: 'low',
-            explanation: 'No significant compliance issues detected'
-          }
-        ],
-        ocrText: 'Sample OCR text for mock document',
-        overallStatus: 'Compliant',
-        keyInsights: 'No specific insights available'
-      }
-    ];
-  }
+  // // Generate mock compliance documents for development
+  // private generateMockComplianceDocuments(): ComplianceDocument[] {
+  //   return [
+  //     {
+  //       id: '1741083892-Mocking Legal Agreement.pdf',
+  //       title: 'Mocking Legal Agreement',
+  //       fileType: 'pdf',
+  //       riskScore: 50,
+  //       riskLevel: 'Medium',
+  //       parsedData: [
+  //         {
+  //           rule_name: 'General Compliance',
+  //           status: 'pass',
+  //           severity: 'low',
+  //           explanation: 'No significant compliance issues detected'
+  //         }
+  //       ],
+  //       ocrText: 'Sample OCR text for mock document',
+  //       overallStatus: 'Compliant',
+  //       keyInsights: 'No specific insights available'
+  //     }
+  //   ];
+  // }
 
   // Analyze document for compliance
   async analyzeDocument(params: ComplianceAnalysisParams): Promise<ComplianceResult> {

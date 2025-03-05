@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import { Zap, FileText } from 'lucide-react';
 import AIInsights from './AIInsights';
 
@@ -32,79 +32,79 @@ interface DocumentAnalysisContainerProps {
   uploadedDocuments: UploadedDocument[];
 }
 
-// Compliance color utility function
-const getComplianceColor = (status: string): string => {
-  switch(status?.toLowerCase()) {
-    case 'pass': return 'text-green-500 bg-green-900 bg-opacity-20';
-    case 'fail': return 'text-red-500 bg-red-900 bg-opacity-20';
-    case 'warning': return 'text-yellow-500 bg-yellow-900 bg-opacity-20';
-    default: return 'text-gray-500 bg-gray-900 bg-opacity-20';
-  }
-};
+// // Compliance color utility function
+// const getComplianceColor = (status: string): string => {
+//   switch(status?.toLowerCase()) {
+//     case 'pass': return 'text-green-500 bg-green-900 bg-opacity-20';
+//     case 'fail': return 'text-red-500 bg-red-900 bg-opacity-20';
+//     case 'warning': return 'text-yellow-500 bg-yellow-900 bg-opacity-20';
+//     default: return 'text-gray-500 bg-gray-900 bg-opacity-20';
+//   }
+// };
 
-const appleScrollVariants = {
-  hidden: { 
-    opacity: 0, 
-    y: 50,
-    scale: 0.98
-  },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 50,
-      damping: 15,
-      duration: 0.8
-    }
-  },
-  exit: { 
-    opacity: 0.3, 
-    y: 20,
-    scale: 0.98,
-    transition: {
-      type: "spring",
-      stiffness: 50,
-      damping: 15,
-      duration: 0.8
-    }
-  }
-};
+// const appleScrollVariants = {
+//   hidden: { 
+//     opacity: 0, 
+//     y: 50,
+//     scale: 0.98
+//   },
+//   visible: { 
+//     opacity: 1, 
+//     y: 0,
+//     scale: 1,
+//     transition: {
+//       type: "spring",
+//       stiffness: 50,
+//       damping: 15,
+//       duration: 0.8
+//     }
+//   },
+//   exit: { 
+//     opacity: 0.3, 
+//     y: 20,
+//     scale: 0.98,
+//     transition: {
+//       type: "spring",
+//       stiffness: 50,
+//       damping: 15,
+//       duration: 0.8
+//     }
+//   }
+// };
 
-const itemVariants = {
-  hidden: { 
-    opacity: 0, 
-    y: 50,
-    scale: 0.98
-  },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 50,
-      damping: 15,
-      duration: 0.8
-    }
-  },
-  exit: { 
-    opacity: 0.3, 
-    y: 20,
-    scale: 0.98,
-    transition: {
-      type: "spring",
-      stiffness: 50,
-      damping: 15,
-      duration: 0.8
-    }
-  }
-};
+// const itemVariants = {
+//   hidden: { 
+//     opacity: 0, 
+//     y: 50,
+//     scale: 0.98
+//   },
+//   visible: { 
+//     opacity: 1, 
+//     y: 0,
+//     scale: 1,
+//     transition: {
+//       type: "spring",
+//       stiffness: 50,
+//       damping: 15,
+//       duration: 0.8
+//     }
+//   },
+//   exit: { 
+//     opacity: 0.3, 
+//     y: 20,
+//     scale: 0.98,
+//     transition: {
+//       type: "spring",
+//       stiffness: 50,
+//       damping: 15,
+//       duration: 0.8
+//     }
+//   }
+// };
 
 const DocumentAnalysisContainer: React.FC<DocumentAnalysisContainerProps> = ({ 
   ocrText, 
-  onNewUpload, 
+  // onNewUpload, 
   uploadedDocuments 
 }) => {
   const [documentText, setDocumentText] = useState(ocrText);

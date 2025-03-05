@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// import { motion, AnimatePresence } from 'framer-motion';
 import '../index.css';
 import { 
-  Zap, 
+  // Zap, 
   Loader2, 
   AlertTriangle, 
   Lightbulb,
@@ -51,9 +51,9 @@ const DEFAULT_INSIGHTS = `## AI-Powered Legal Insights
 
 // AIInsights component for generating AI-powered document insights
 const AIInsights: React.FC<AIInsightsProps> = ({ 
-  documentText, 
-  icon, 
-  title 
+  documentText
+  // icon, 
+  // title 
 }) => {
   // State management for insights, loading, and error handling
   const [insights, setInsights] = useState<string>(DEFAULT_INSIGHTS);

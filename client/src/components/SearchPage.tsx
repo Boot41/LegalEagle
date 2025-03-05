@@ -4,7 +4,7 @@ import { FileText, HelpCircle, Search as SearchIcon } from 'lucide-react';
 import SearchBar from './SearchBar';
 
 const SearchPage: React.FC = () => {
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults] = useState([]);
 
   return (
     <div className="w-full space-y-10">

@@ -4,6 +4,7 @@ import (
 	// "yourproject/controllers"
 	// "yourproject/services"
 	"log"
+	"net/http"
 
 	controller "github.com/Itish41/LegalEagle/controller"
 	"github.com/Itish41/LegalEagle/initializers"
@@ -52,6 +53,11 @@ func main() {
 
 	router.GET("/rules", docController.GetAllComplianceRules)
 	router.POST("/rules/by-names", docController.GetComplianceRulesByNames)
+
+	// Healthcheck endpoint
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+	})
 
 	// Other endpoints
 	router.GET("/search", docController.SearchDocuments)

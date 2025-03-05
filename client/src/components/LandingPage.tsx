@@ -1,25 +1,25 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Search, 
-  Upload, 
+  // Search, 
+  // Upload, 
   Shield, 
   Clock, 
-  FileCheck, 
+  // FileCheck, 
   Zap, 
   Code,
   ArrowRight,
-  Rocket,
+  // Rocket,
   Target,
   Layers,
   Database,
   Cpu,
   Lock,
-  CheckCircle
+  // CheckCircle
 } from 'lucide-react';
 
-import DocumentAnalysisContainer from './DocumentAnalysisContainer';
-import SearchBar from './SearchBar';
+// import DocumentAnalysisContainer from './DocumentAnalysisContainer';
+// import SearchBar from './SearchBar';
 
 // Reusable animation variants
 const appleScrollVariants = {
@@ -52,16 +52,16 @@ const appleScrollVariants = {
   }
 };
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1,
-    transition: {
-      delayChildren: 0.2,
-      staggerChildren: 0.1
-    }
-  }
-};
+// const containerVariants = {
+//   hidden: { opacity: 0 },
+//   visible: { 
+//     opacity: 1,
+//     transition: {
+//       delayChildren: 0.2,
+//       staggerChildren: 0.1
+//     }
+//   }
+// };
 
 const itemVariants = {
   hidden: { 

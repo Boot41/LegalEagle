@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Save, RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 
 interface ComplianceRule {
   ID: string;  
@@ -215,7 +215,7 @@ const ComplianceRuleManager: React.FC = () => {
                     return (
                       <tr key={rule.ID} className="border-t border-gray-800 hover:bg-[#2C2C2C]">
                         <td className="p-3 text-sm">{rule.Name || 'N/A'}</td>
-                        <td className="p-3 text-sm font-mono text-xs">{rule.Pattern || 'N/A'}</td>
+                        <td className="p-3 text-sm font-mono ">{rule.Pattern || 'N/A'}</td>
                         <td className="p-3 text-sm">
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             rule.Severity === 'high' ? 'bg-red-900/30 text-red-200' : 
