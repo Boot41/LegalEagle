@@ -65,6 +65,94 @@ const ComplianceBadge = ({ status, ruleName }: { status: string, ruleName?: stri
   );
 };
 
+// const ComplianceDetailsModal = ({ 
+//     isOpen, 
+//     onClose, 
+//     doc 
+// }: { 
+//     isOpen: boolean, 
+//     onClose: () => void, 
+//     doc: any 
+// }) => {
+//     if (!isOpen) return null;
+
+//     return (
+//         <motion.div 
+//             initial={{ opacity: 0 }}
+//             animate={{ opacity: 1 }}
+//             exit={{ opacity: 0 }}
+//             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+//             onClick={onClose}
+//         >
+//             <motion.div 
+//                 initial={{ scale: 0.9, opacity: 0 }}
+//                 animate={{ scale: 1, opacity: 1 }}
+//                 exit={{ scale: 0.9, opacity: 0 }}
+//                 className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-8"
+//                 onClick={(e) => e.stopPropagation()}
+//             >
+//                 <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white border-b pb-4 border-slate-200 dark:border-slate-700">
+//                     Compliance Insights
+//                 </h2>
+//                 <div className="space-y-4">
+//                     <div className="flex justify-between items-center">
+//                         <span className="font-semibold text-slate-600 dark:text-slate-300">Document:</span>
+//                         <span className="text-slate-900 dark:text-white font-medium truncate max-w-[200px]">
+//                             {doc.title}
+//                         </span>
+//                     </div>
+//                     <div className="flex justify-between items-center">
+//                         <span className="font-semibold text-slate-600 dark:text-slate-300">
+//                             Overall Status:
+//                         </span>
+//                         <ComplianceBadge 
+//                             status={doc.compliance_status} 
+//                             ruleName={doc.applicable_rules?.[0]} 
+//                         />
+//                     </div>
+//                     <div className="border-t pt-4 border-slate-200 dark:border-slate-700">
+//                         <h3 className="font-semibold mb-3 text-slate-700 dark:text-slate-200">
+//                             Detailed Compliance Results:
+//                         </h3>
+//                         {(doc.compliance_details || []).map((detail: any, index: number) => (
+//                             <motion.div 
+//                                 key={index}
+//                                 initial={{ opacity: 0, x: -20 }}
+//                                 animate={{ opacity: 1, x: 0 }}
+//                                 transition={{ delay: index * 0.1 }}
+//                                 className="bg-slate-100 dark:bg-slate-700 rounded-lg p-4 mb-3 
+//                                   transition-all duration-300 ease-in-out 
+//                                   hover:shadow-md hover:scale-[1.02]"
+//                             >
+//                                 <div className="flex justify-between items-center mb-2">
+//                                     <span className="font-medium text-slate-800 dark:text-slate-200">
+//                                         {detail.rule_name}
+//                                     </span>
+//                                     <ComplianceBadge status={detail.status} />
+//                                 </div>
+//                                 {detail.explanation && (
+//                                     <p className="text-sm text-slate-600 dark:text-slate-300 
+//                                       border-l-4 border-slate-300 dark:border-slate-600 pl-3 mt-2">
+//                                         {detail.explanation}
+//                                     </p>
+//                                 )}
+//                             </motion.div>
+//                         ))}
+//                     </div>
+//                 </div>
+//                 <button 
+//                     onClick={onClose}
+//                     className="mt-6 w-full bg-emerald-500 text-white py-3 rounded-lg 
+//                       hover:bg-emerald-600 transition-all duration-300 
+//                       focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+//                 >
+//                     Close Insights
+//                 </button>
+//             </motion.div>
+//         </motion.div>
+//     );
+// };
+
 const ComplianceDetailsModal = ({ 
     isOpen, 
     onClose, 
@@ -75,6 +163,9 @@ const ComplianceDetailsModal = ({
     doc: any 
 }) => {
     if (!isOpen) return null;
+
+    // Determine compliance status based on risk score
+    const complianceStatus = doc.risk_score === 0 ? "Pass" : doc.compliance_status;
 
     return (
         <motion.div 
@@ -94,7 +185,7 @@ const ComplianceDetailsModal = ({
                 <h2 className="text-2xl font-bold mb-6 text-slate-900 dark:text-white border-b pb-4 border-slate-200 dark:border-slate-700">
                     Compliance Insights
                 </h2>
-                <div className="space-y-4">
+                <div className="max-h-[400px] overflow-y-auto space-y-4">
                     <div className="flex justify-between items-center">
                         <span className="font-semibold text-slate-600 dark:text-slate-300">Document:</span>
                         <span className="text-slate-900 dark:text-white font-medium truncate max-w-[200px]">
@@ -106,7 +197,7 @@ const ComplianceDetailsModal = ({
                             Overall Status:
                         </span>
                         <ComplianceBadge 
-                            status={doc.compliance_status} 
+                            status={complianceStatus} // Use the computed compliance status
                             ruleName={doc.applicable_rules?.[0]} 
                         />
                     </div>
@@ -152,7 +243,6 @@ const ComplianceDetailsModal = ({
         </motion.div>
     );
 };
-
 const Dashboard = () => {
     const [documents, setDocuments] = useState<Document[]>([]);
     const [loading, setLoading] = useState(true);

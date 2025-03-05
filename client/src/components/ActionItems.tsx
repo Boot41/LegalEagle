@@ -144,7 +144,7 @@ const ActionItems: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="glass-card rounded-xl overflow-hidden shadow-lg"
+            className="glass-card rounded-xl overflow-hidden shadow-lg "
           >
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -178,37 +178,39 @@ const ActionItems: React.FC = () => {
                         <PriorityBadge priority={item.priority} />
                       </td>
                       <td className="p-4 text-[var(--color-text-secondary)]">
-                        {assignItemId === item.id ? (
-                          <div className="flex items-center">
-                            <input 
-                              type="email" 
-                              className="border rounded p-1 mr-2" 
-                              placeholder="Enter email" 
-                              value={assignEmail}
-                              onChange={(e) => setAssignEmail(e.target.value)}
-                            />
-                            <button 
-                              className="bg-[var(--color-primary)] text-white px-3 py-1 rounded"
-                              onClick={() => handleAssign(item.id)}
-                            >
-                              Upload
-                            </button>
-                            <button 
-                              className="ml-2 text-[var(--color-text-secondary)]"
-                              onClick={cancelAssign}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={() => setAssignItemId(item.id)}
-                            className="underline text-blue-600"
-                          >
-                            {item.assigned_to ? item.assigned_to : 'Unassigned'}
-                          </button>
-                        )}
-                      </td>
+  {assignItemId === item.id ? (
+    <div className="flex flex-col items-end">
+      <input 
+        type="email" 
+        className="border border-gray-300 rounded p-2 mb-2 w-full focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+        placeholder="Enter email" 
+        value={assignEmail}
+        onChange={(e) => setAssignEmail(e.target.value)}
+      />
+      <div className="flex space-x-2">
+        <button 
+          className="bg-[var(--color-primary)] text-white px-4 py-2 rounded hover:bg-[var(--color-primary-dark)] active:bg-[var(--color-primary-darker)] transition duration-200 ease-in-out"
+          onClick={() => handleAssign(item.id)}
+        >
+          Assign
+        </button>
+        <button 
+          className="bg-gray-200 text-[var(--color-text-secondary)] hover:bg-gray-300 transition duration-200 ease-in-out px-4 py-2 rounded"
+          onClick={cancelAssign}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  ) : (
+    <button 
+      onClick={() => setAssignItemId(item.id)}
+      className="text-[var(--color-primary)] underline"
+    >
+      {item.assigned_to ? item.assigned_to : 'Unassigned'}
+    </button>
+  )}
+</td>
                       <td className="p-4 text-[var(--color-text-secondary)]">
                         {item.due_date ? new Date(item.due_date).toLocaleDateString() : 'No date set'}
                       </td>

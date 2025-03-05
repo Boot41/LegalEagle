@@ -22,25 +22,23 @@ func (c *DocumentController) GetPendingActionItems(ctx *gin.Context) {
 
 // AssignActionItem updates the AssignedTo field of an action item and sends a notification email.
 func (c *DocumentController) AssignActionItem(ctx *gin.Context) {
-	// Get action ID from URL parameters.
+	// Extract the action item ID from the URL parameter.
 	actionID := ctx.Param("id")
 	if actionID == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Action ID required"})
 		return
 	}
 
-	// Define a request body structure to parse the email.
+	// Parse the email from the request body.
 	var req struct {
 		Email string `json:"email" binding:"required,email"`
 	}
-
-	// Bind the JSON request to the struct.
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email provided", "details": err.Error()})
 		return
 	}
 
-	// Call the service function to assign and notify.
+	// Call the service function to update the action item and send the notification.
 	if err := c.service.AssignAndNotifyActionItem(actionID, req.Email); err != nil {
 		log.Printf("[AssignActionItem] Error assigning action item: %v", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

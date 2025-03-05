@@ -1,16 +1,15 @@
 package services
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/smtp"
 	"regexp"
 	"strings"
 	"time"
 
 	model "github.com/Itish41/LegalEagle/models"
-	"github.com/resend/resend-go/v2"
 	"gorm.io/datatypes"
 )
 
@@ -93,7 +92,7 @@ func marshalResult(result map[string]interface{}) []byte {
 	return bytes
 }
 
-// AssignAndNotifyActionItem updates the AssignedTo field of an action item and sends an email notification.
+// AssignAndNotifyActionItem updates the AssignedTo field of an action item and sends an email notification using Gmail SMTP.
 func (s *DocumentService) AssignAndNotifyActionItem(actionID string, email string) error {
 	// Retrieve the action item from the database.
 	var action model.ActionItem
@@ -111,27 +110,49 @@ func (s *DocumentService) AssignAndNotifyActionItem(actionID string, email strin
 	}
 	log.Printf("[AssignAndNotifyActionItem] Updated AssignedTo to %s for action item %s", email, actionID)
 
-	// Set up the Resend client.
-	ctx := context.TODO()
-	// Replace the API key with your actual Resend API key or load it from configuration.
-	client := resend.NewClient("re_NhKydByt_8pSB2riSRbk1c2PfMXG9scPG")
+	// Gmail SMTP configuration.
+	// Replace these with environment variables or secure config values in production.
+	from := "itish.srivastava@think41.com" // your Gmail address
+	password := "reuppqgmshnkqsoj"         // your Gmail app-specific password
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
 
-	// Prepare the email parameters.
-	params := &resend.SendEmailRequest{
-		From:    "Acme <onboarding@resend.dev>",
-		To:      []string{email},
-		Subject: fmt.Sprintf("Action Item Assigned: %s", action.Description),
-		Html:    fmt.Sprintf("<p>You have been assigned the following action item:<br>%s</p>", action.Description),
-	}
+	/// Prepare the email content.
+	subject := fmt.Sprintf("Action Item Assigned: %s", action.Description)
+	body := fmt.Sprintf(`
+	<html>
+	<body>
+		<h2>Action Item Assigned</h2>
+		<p>Dear User,</p>
+		<p>You have been assigned a new action item:</p>
+		<ul>
+			<li><strong>Title:</strong> %s</li>
+			<li><strong>Description:</strong> %s</li>
+			<li><strong>Due Date:</strong> %s</li>
+			<li><strong>Priority:</strong> %s</li>
+		</ul>
+		<p>Please take the necessary actions to complete it.</p>
+		<p>Best regards,<br>Your Team</p>
+	</body>
+	</html>
+`, "Action Item Assigned", action.Description, action.DueDate.Format("January 2, 2006"), action.Priority)
+	// Construct the email message.
+	message := []byte("Subject: " + subject + "\r\n" +
+		"From: " + from + "\r\n" +
+		"To: " + email + "\r\n" +
+		"Content-Type: text/html; charset=UTF-8\r\n\r\n" +
+		body)
+
+	// Set up authentication.
+	auth := smtp.PlainAuth("", from, password, smtpHost)
 
 	// Send the email.
-	sent, err := client.Emails.SendWithContext(ctx, params)
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, []string{email}, message)
 	if err != nil {
 		log.Printf("[AssignAndNotifyActionItem] Error sending email for action item %s: %v", actionID, err)
 		return err
 	}
-	log.Printf("[AssignAndNotifyActionItem] Email sent successfully. Email ID: %s", sent.Id)
-
+	log.Printf("[AssignAndNotifyActionItem] Email sent successfully to %s for action item %s", email, actionID)
 	return nil
 }
 

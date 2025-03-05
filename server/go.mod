@@ -7,7 +7,6 @@ require (
 	github.com/elastic/go-elasticsearch/v8 v8.17.1
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
-	github.com/resend/resend-go/v2 v2.15.0
 	github.com/stretchr/testify v1.10.0
 )
 

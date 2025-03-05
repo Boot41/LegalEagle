@@ -1,179 +1,122 @@
-# LegalEagle 🦅 | Intelligent Document Compliance Platform
+# LegalEagle 
 
-## 🌟 Project Overview
+LegalEagle is a comprehensive compliance management application designed to streamline the process of managing compliance rules, action items, and document uploads. The application features a modern UI with a dark theme, robust backend services, and seamless integration with Gmail for email notifications.
 
-LegalEagle is an advanced, AI-powered document compliance and risk assessment platform designed to revolutionize legal document management. By leveraging cutting-edge technologies, LegalEagle provides comprehensive document analysis, intelligent rule management, and real-time risk scoring.
+## Features
 
-## 🚀 Key Features
+- **Dashboard:** Centralized view for managing compliance insights and document uploads.
+- **Compliance Rule Manager:** Create, update, and manage compliance rules with detailed compliance results.
+- **Action Items:** Assign and track action items with email notifications.
+- **Document Upload:** Upload and validate documents with progress bar visualization for risk scores.
+- **Compliance Details Modal:** Detailed insights into compliance status and results.
 
-### 1. Intelligent Document Processing
-- Advanced document upload and parsing
-- Multi-format support (PDF, DOCX, TXT, etc.)
-- Intelligent text extraction and analysis
+## Project Structure
 
-### 2. Compliance Rule Management
-- Dynamic rule creation and management
-- Customizable compliance patterns
-- Severity-based rule classification
-- Real-time rule validation
+### Client
+- **Components:**
+  - [Dashboard.tsx](cci:7://file:///home/itish/go_projects/legaleagle/client/src/components/Dashboard.tsx:0:0-0:0): Main dashboard component.
+  - `ComplianceRuleManager.tsx`: Manage compliance rules.
+  - `ActionItems.tsx`: Manage and assign action items.
+  - `ComplianceDetailsModal.tsx`: Detailed compliance insights modal.
 
-### 3. Risk Assessment Engine
-- AI-powered risk scoring
-- Granular risk categorization
-- Comprehensive compliance checks
-- Visual risk indicators
+### Server
+- **Services:**
+  - `action_service.go`: Handles action item assignments and email notifications.
+- **Models:**
+  - `actionItem.go`: Defines the ActionItem model.
+- **Migrations:**
+  - `004_create_action_items.up.sql`: Migration script for creating action items table.
 
-### 4. Modern UI/UX
-- Dark theme with gradient design
-- Responsive and accessible interface
-- Smooth animations and transitions
-- Intuitive user experience
-
-## 🔧 Technical Architecture
+## Dependencies
 
 ### Frontend
-- **Framework**: React 19
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **State Management**: React Hooks
-- **Routing**: React Router
-- **Animation**: Framer Motion
+- **React:** JavaScript library for building user interfaces.
+- **Framer Motion:** Animation library for React.
+- **Tailwind CSS:** Utility-first CSS framework.
 
 ### Backend
-- **Language**: Go 1.24
-- **Web Framework**: Gin
-- **ORM**: GORM
-- **Database**: PostgreSQL
-- **Search**: Elasticsearch
-- **Caching**: Redis (Optional)
+- **Gin:** HTTP web framework for Go.
+- **GORM:** ORM library for Go.
+- **Gmail SMTP:** For sending email notifications.
 
-### Infrastructure
-- **Containerization**: Docker
-- **Monitoring**: Prometheus & Grafana
-- **Logging**: Zap Logger
-- **Authentication**: JWT
+## Setup Instructions
 
-## 📦 System Components
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/yourusername/legaleagle.git
+   cd legaleagle
+   ```
 
-### Document Upload Module
-- Drag and drop interface
-- File type validation
-- Virus scanning
-- Metadata extraction
-- Progress tracking
+2. **Install Dependencies:**
+   - **Frontend:**
+     ```bash
+     cd client
+     npm install
+     ```
+   - **Backend:**
+     ```bash
+     cd server
+     go mod download
+     ```
 
-### Compliance Rule Manager
-- CRUD operations for rules
-- Pattern-based matching
-- Severity levels (Low/Medium/High)
-- Real-time rule validation
+3. **Set Environment Variables:**
+   Create a `.env` file in the `server` directory with the following variables:
+   ```
+   GMAIL_EMAIL=your-email@gmail.com
+   GMAIL_PASSWORD=your-email-password
+   ```
 
-### Risk Assessment Module
-- Machine learning risk scoring
-- Configurable risk thresholds
-- Detailed risk breakdown
-- Exportable risk reports
+4. **Run Migrations:**
+   ```bash
+   cd server
+   go run main.go migrate
+   ```
 
-## 🛠 Development Setup
+5. **Start the Application:**
+   - **Frontend:**
+     ```bash
+     cd client
+     npm start
+     ```
+   - **Backend:**
+     ```bash
+     cd server
+     go run main.go
+     ```
 
-### Prerequisites
-- Go 1.24+
-- Node.js 20+
-- Docker
-- PostgreSQL 13+
-- Elasticsearch 8.x
+## Usage
 
-### Local Development
+1. **Dashboard:**
+   - View and manage compliance insights.
+   - Upload and validate documents.
 
-#### Backend Setup
-```bash
-# Navigate to server directory
-cd server
+2. **Compliance Rule Manager:**
+   - Create and update compliance rules.
+   - View detailed compliance results.
 
-# Install dependencies
-go mod tidy
+3. **Action Items:**
+   - Assign action items to users.
+   - Track the status of action items.
 
-# Run migrations
-make migrate
+4. **Document Upload:**
+   - Upload documents and view risk scores.
+   - See progress bar visualization for risk scores.
 
-# Start development server
-go run main.go
-```
+## Contribution Guidelines
 
-#### Frontend Setup
-```bash
-# Navigate to client directory
-cd client
+We welcome contributions to LegalEagle! Please follow these guidelines:
 
-# Install dependencies
-npm install
+1. **Fork the Repository:**
+   - Fork the repository and create a new branch for your feature or bug fix.
 
-# Start development server
-npm run dev
-```
+2. **Submit a Pull Request:**
+   - Ensure your code follows the project's coding standards.
+   - Include a detailed description of your changes in the pull request.
 
-#### Elasticsearch Setup
-```bash
-docker run -d \
-  --name elasticsearch \
-  -p 9200:9200 \
-  -p 9300:9300 \
-  -e "discovery.type=single-node" \
-  -e "xpack.security.enabled=false" \
-  docker.elastic.co/elasticsearch/elasticsearch:8.12.2
-```
+3. **Testing:**
+   - Ensure all new features are thoroughly tested.
+   - Include unit tests where applicable.
 
-## 🔒 Security Features
-- JWT Authentication
-- Role-based Access Control
-- Input Sanitization
-- HTTPS Encryption
-- Regular Security Audits
+## License
 
-## 📊 Performance Optimization
-- Efficient database indexing
-- Caching mechanisms
-- Asynchronous processing
-- Horizontal scalability
-
-## 🧪 Testing
-- Unit Testing
-- Integration Testing
-- End-to-End Testing
-- Performance Benchmarking
-
-## 🤝 Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-### Contribution Guidelines
-- Follow Go and TypeScript best practices
-- Write comprehensive tests
-- Maintain clean, readable code
-- Update documentation
-
-## 📝 License
-Proprietary Software - All Rights Reserved
-
-## 📞 Contact
-Developed by Itish
-- Email: [Your Professional Email]
-- LinkedIn: [Your LinkedIn Profile]
-- GitHub: [Your GitHub Profile]
-
-## 🌈 Design Philosophy
-- Modern, Dark Theme Aesthetic
-- Enhanced Visual Hierarchy
-- Gradient Color Scheme (#3ECF8E to #7EDCB5)
-- Improved State Feedback
-- Consistent Component Styling
-
-## 🔮 Future Roadmap
-- Machine Learning Risk Prediction
-- Multi-language Support
-- Advanced Analytics Dashboard
-- Cloud Integration
-- Compliance Template Library
+LegalEagle is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
