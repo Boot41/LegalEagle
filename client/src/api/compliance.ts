@@ -61,12 +61,12 @@ export function calculateRiskLevel(riskScore: number): 'Low' | 'Medium' | 'High'
 }
 
 class ComplianceService {
-  private baseUrl = '/'; // Base URL for the backend
+  // private baseUrl = '/'; // Base URL for the backend
 
   // Fetch compliance rules
   async getAllRules(): Promise<ComplianceRule[]> {
     try {
-      const response = await fetch(`${this.baseUrl}rules`, {
+      const response = await fetch(`/api/rules`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

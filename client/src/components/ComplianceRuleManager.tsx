@@ -27,7 +27,7 @@ const ComplianceRuleManager: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8080/rules');
+      const response = await fetch('/api/rules');
       if (!response.ok) {
         throw new Error(`Error fetching rules: ${response.statusText}`);
       }
@@ -52,7 +52,7 @@ const ComplianceRuleManager: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:8080/rules', {
+      const response = await fetch('/api/rules', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

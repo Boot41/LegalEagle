@@ -1,10 +1,9 @@
 package main
 
 import (
-	// "yourproject/controllers"
-	// "yourproject/services"
 	"log"
 	"net/http"
+	"os"
 
 	controller "github.com/Itish41/LegalEagle/controller"
 	"github.com/Itish41/LegalEagle/initializers"
@@ -21,13 +20,17 @@ func init() {
 	if err := initializers.ConnectDB(); err != nil {
 		log.Fatalf("[CRITICAL] Failed to initialize database connection: %s", err)
 	}
-	// Uncomment to run migrations
 	if err := initializers.Migrate(); err != nil {
 		log.Fatalf("[CRITICAL] Failed to run database migrations: %s", err)
 	}
 }
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+
 	docService, err := service.NewDocumentService(initializers.DB)
 	if err != nil {
 		log.Fatalf("Failed to initialize document service: %s", err)
@@ -38,35 +41,31 @@ func main() {
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())
 
-	// Global rate limiter for most routes
-	router.Use(middleware.GlobalRateLimiter.Limit())
+	// ✅ Serve frontend correctly
+	router.StaticFS("/assets", http.Dir("/app/frontend/dist/assets"))
+	router.NoRoute(func(c *gin.Context) {
+		c.File("/app/frontend/dist/index.html")
+	})
 
-	// Sensitive routes with stricter rate limiting
-	router.POST("/upload",
-		middleware.StrictRateLimiter.Limit(),
-		docController.UploadDocument)
+	// ✅ API routes
+	api := router.Group("/api")
+	api.Use(middleware.GlobalRateLimiter.Limit())
 
-	// Compliance rules endpoints with strict rate limiting
-	router.POST("/rules",
-		middleware.StrictRateLimiter.Limit(),
-		docController.AddComplianceRule)
+	api.POST("/upload", middleware.StrictRateLimiter.Limit(), docController.UploadDocument)
+	api.POST("/rules", middleware.StrictRateLimiter.Limit(), docController.AddComplianceRule)
+	api.GET("/rules", docController.GetAllComplianceRules)
+	api.POST("/rules/by-names", docController.GetComplianceRulesByNames)
 
-	router.GET("/rules", docController.GetAllComplianceRules)
-	router.POST("/rules/by-names", docController.GetComplianceRulesByNames)
-
-	// Healthcheck endpoint
-	router.GET("/health", func(c *gin.Context) {
+	api.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
-	router.POST("/action-update/:id", docController.AssignActionItem)
-	// Other endpoints
-	router.GET("/search", docController.SearchDocuments)
-	router.GET("/dashboard", docController.GetAllDocuments)
-	router.GET("/action-items", docController.GetPendingActionItemsWithTitles)
-	router.PUT("/action-items/:id/complete",
-		middleware.StrictRateLimiter.Limit(),
-		docController.CompleteActionItem)
+	api.POST("/action-update/:id", docController.AssignActionItem)
+	api.GET("/search", docController.SearchDocuments)
+	api.GET("/dashboard", docController.GetAllDocuments)
+	api.GET("/action-items", docController.GetPendingActionItemsWithTitles)
+	api.PUT("/action-items/:id/complete", middleware.StrictRateLimiter.Limit(), docController.CompleteActionItem)
 
-	router.Run(":8080")
+	log.Printf("Server running on port %s...", port)
+	router.Run(":" + port)
 }

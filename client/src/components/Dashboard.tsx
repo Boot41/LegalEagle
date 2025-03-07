@@ -260,7 +260,7 @@ const Dashboard = () => {
         const fetchDocuments = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('http://localhost:8080/dashboard');
+                const response = await fetch('/api/dashboard');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -303,7 +303,7 @@ const Dashboard = () => {
             const fetchDocuments = async () => {
                 try {
                     setLoading(true);
-                    const response = await fetch('http://localhost:8080/dashboard');
+                    const response = await fetch('/api/dashboard');
                     
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
