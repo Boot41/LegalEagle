@@ -14,7 +14,7 @@ LegalEagle is a comprehensive compliance management application designed to stre
 
 ### Client
 - **Components:**
-  - [Dashboard.tsx](cci:7://file:///home/itish/go_projects/legaleagle/client/src/components/Dashboard.tsx:0:0-0:0): Main dashboard component.
+  - `Dashboard.tsx`: Main dashboard component.
   - `ComplianceRuleManager.tsx`: Manage compliance rules.
   - `ActionItems.tsx`: Manage and assign action items.
   - `ComplianceDetailsModal.tsx`: Detailed compliance insights modal.
@@ -83,6 +83,30 @@ LegalEagle is a comprehensive compliance management application designed to stre
      cd server
      go run main.go
      ```
+
+## Testing
+First, install the required testing tools:
+```bash
+go install github.com/agiledragon/gomonkey/v2@latest
+go install github.com/kyoh86/richgo@latest
+export PATH=$PATH:$(go env GOPATH)/bin
+source ~/.bashrc
+```
+
+### Normal Tests
+```bash
+# Verbose testing
+richgo test -v ./...
+
+# Count of tests
+richgo test -v ./... 2>&1 | grep '^=== RUN' | wc -l
+```
+
+### Coverage Report
+```bash
+richgo test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+```
 
 ## Usage
 
